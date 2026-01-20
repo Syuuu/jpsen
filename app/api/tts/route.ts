@@ -57,5 +57,41 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  if (provider === "openai") {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return new Response("Missing OPENAI_API_KEY", { status: 400 });
+    }
+    const model = process.env.OPENAI_TTS_MODEL ?? "gpt-4o-mini-tts";
+    const format = process.env.OPENAI_TTS_FORMAT ?? "mp3";
+    const voice = voiceParam ?? process.env.TTS_VOICE ?? "alloy";
+    const res = await fetch("https://api.openai.com/v1/audio/speech", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model,
+        voice,
+        format,
+        input: text
+      })
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      return new Response(`TTS provider error: ${errorText}`, { status: 502 });
+    }
+    const audioBuffer = await res.arrayBuffer();
+    const contentType = res.headers.get("content-type") ?? "audio/mpeg";
+    audioCache.set(cacheKey, audioBuffer);
+    return new Response(audioBuffer, {
+      headers: {
+        "Content-Type": contentType,
+        "X-Cache": "MISS"
+      }
+    });
+  }
+
   return new Response("Unsupported TTS provider", { status: 501 });
 }

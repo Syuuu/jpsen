@@ -17,7 +17,7 @@ npm run dev
 浏览器打开 `http://localhost:3000`。
 
 ## 环境变量（可选）
-默认无需配置即可运行。若需要服务器端 TTS：
+默认无需配置即可运行。若需要服务器端 TTS（支持 VoiceRSS 或 OpenAI）：
 
 ```bash
 TTS_PROVIDER=voicerss
@@ -25,11 +25,41 @@ TTS_API_KEY=你的key
 TTS_VOICE=ja-jp
 ```
 
+## 如何接入第三方 TTS API
+项目内置 `/api/tts` 作为统一入口，你可以在 `app/api/tts/route.ts` 中按需扩展供应商逻辑。
+
+**推荐流程：**
+1. 在环境变量中设置 `TTS_PROVIDER` 与对应的密钥。
+2. 在 `route.ts` 中根据 `TTS_PROVIDER` 选择不同的供应商实现。
+3. 返回音频二进制数据（`audio/mpeg` 或 `audio/wav`），前端自动播放。
+
+**示例：使用 VoiceRSS**
+```bash
+TTS_PROVIDER=voicerss
+TTS_API_KEY=你的key
+TTS_VOICE=ja-jp
+```
+
+**示例：使用 OpenAI**
+```bash
+TTS_PROVIDER=openai
+OPENAI_API_KEY=你的key
+OPENAI_TTS_MODEL=gpt-4o-mini-tts
+OPENAI_TTS_FORMAT=mp3
+TTS_VOICE=alloy
+```
+
+**可扩展方向：**
+- 新增 `if (provider === "azure") { ... }`、`if (provider === "polly") { ... }` 分支。
+- 使用 `voice` 查询参数来切换不同音色（例如 `?voice=female1`）。
+
 ## 部署到 Vercel
 1. 将仓库推到 GitHub。
 2. 在 Vercel 导入项目（Framework 选择 Next.js）。
-3. 如需服务器端 TTS，在 Vercel 的 Environment Variables 中添加上述变量。
-4. 部署完成后即可访问。
+3. 进入项目 Settings → Environment Variables。
+4. 选择环境（Production/Preview/Development），逐项添加变量（如 `TTS_PROVIDER`、`OPENAI_API_KEY` 等）。
+5. 保存后触发一次重新部署（Redeploy）。
+6. 部署完成后即可访问。
 
 ## 项目结构
 ```

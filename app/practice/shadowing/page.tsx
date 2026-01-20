@@ -7,9 +7,7 @@ import { TagChips } from "@/components/TagChips";
 const rates = [0.75, 0.9, 1.0, 1.1, 1.25];
 const femaleVoiceRegex = /female|woman|girl|女|女性|ガール/i;
 
-function getJapaneseVoice(preferFemale: boolean) {
-  if (typeof window === "undefined") return null;
-  const voices = window.speechSynthesis.getVoices();
+function pickJapaneseVoice(voices: SpeechSynthesisVoice[], preferFemale: boolean) {
   const japaneseVoices = voices.filter((voice) => voice.lang.startsWith("ja"));
   if (preferFemale) {
     const femaleVoice = japaneseVoices.find((voice) => femaleVoiceRegex.test(voice.name));
@@ -33,7 +31,7 @@ export default function ShadowingPage() {
     const res = await fetch(
       `/api/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(voice)}`
     );
-    if (!res.ok) return null;
+    if (!res.ok || res.status === 204) return null;
     const contentType = res.headers.get("content-type") ?? "";
     if (!contentType.includes("audio")) return null;
     return res.blob();
@@ -41,18 +39,32 @@ export default function ShadowingPage() {
 
   const playWebSpeech = (text: string) => {
     if (typeof window === "undefined") return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "ja-JP";
-    utterance.rate = rate;
-    const selectedVoice = getJapaneseVoice(voice.startsWith("female"));
-    if (selectedVoice) utterance.voice = selectedVoice;
-    utterance.onend = () => {
-      if (loop) {
-        playWebSpeech(text);
-      }
+    const synth = window.speechSynthesis;
+    const speak = () => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "ja-JP";
+      utterance.rate = rate;
+      const selectedVoice = pickJapaneseVoice(synth.getVoices(), voice.startsWith("female"));
+      if (selectedVoice) utterance.voice = selectedVoice;
+      utterance.onend = () => {
+        if (loop) {
+          playWebSpeech(text);
+        }
+      };
+      synth.cancel();
+      synth.speak(utterance);
     };
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
+
+    const voices = synth.getVoices();
+    if (voices.length > 0) {
+      speak();
+    } else {
+      synth.onvoiceschanged = () => {
+        speak();
+        synth.onvoiceschanged = null;
+      };
+      speak();
+    }
   };
 
   const play = async () => {

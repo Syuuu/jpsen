@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { storageKeys, readStorage, writeStorage } from "@/lib/storage";
-import { ensureSrsMap, SrsMap, updateSrsEntry, EaseLevel } from "@/lib/srs";
+import { ensureSrsMap, SrsMap, updateSrsEntry, EaseLevel, dailyReviewLimit } from "@/lib/srs";
 import { phrases } from "@/data/phrases";
 
 export function useSrs() {
@@ -20,7 +20,9 @@ export function useSrs() {
 
   const dueToday = useMemo(() => {
     const now = Date.now();
-    return phrases.filter((phrase) => srsMap[phrase.id]?.dueAt <= now);
+    return phrases
+      .filter((phrase) => srsMap[phrase.id]?.dueAt <= now)
+      .slice(0, dailyReviewLimit);
   }, [srsMap]);
 
   const setEase = (id: string, ease: EaseLevel) => {

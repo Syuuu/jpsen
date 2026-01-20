@@ -5,11 +5,14 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { ProgressMeter } from "@/components/ProgressMeter";
 import { SrsButtons } from "@/components/SrsButtons";
 import { useSrs } from "@/hooks/useSrs";
-import { getDuePhrases } from "@/lib/srs";
+import { dailyReviewLimit, getDuePhrases } from "@/lib/srs";
 
 export default function ReviewPage() {
   const { srsMap, dueToday, setEase } = useSrs();
-  const dueList = useMemo(() => getDuePhrases(srsMap), [srsMap]);
+  const dueList = useMemo(
+    () => getDuePhrases(srsMap).slice(0, dailyReviewLimit),
+    [srsMap]
+  );
   const [index, setIndex] = useState(0);
   const completed = Math.min(index, dueList.length);
 

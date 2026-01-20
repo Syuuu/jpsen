@@ -5,10 +5,11 @@ import { phrases } from "@/data/phrases";
 import { PhraseCard } from "@/components/PhraseCard";
 import { ProgressMeter } from "@/components/ProgressMeter";
 import { useSrs } from "@/hooks/useSrs";
+import { dailyReviewLimit } from "@/lib/srs";
 
 export default function HomePage() {
   const { dueToday } = useSrs();
-  const goal = 12;
+  const goal = dailyReviewLimit;
   const completed = Math.max(0, goal - dueToday.length);
 
   return (

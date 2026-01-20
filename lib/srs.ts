@@ -11,6 +11,8 @@ export type SrsEntry = {
 
 export type SrsMap = Record<string, SrsEntry>;
 
+export const dailyReviewLimit = 20;
+
 export const defaultEntry = (): SrsEntry => ({
   ease: 1,
   dueAt: Date.now(),
