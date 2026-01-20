@@ -5,15 +5,17 @@ import { phrases } from "@/data/phrases";
 import { TagChips } from "@/components/TagChips";
 
 const rates = [0.75, 0.9, 1.0, 1.1, 1.25];
+const femaleVoiceRegex = /female|woman|girl|女|女性|ガール/i;
 
-function getJapaneseVoice() {
+function getJapaneseVoice(preferFemale: boolean) {
   if (typeof window === "undefined") return null;
   const voices = window.speechSynthesis.getVoices();
-  return (
-    voices.find((voice) => voice.lang === "ja-JP") ||
-    voices.find((voice) => voice.lang.startsWith("ja")) ||
-    null
-  );
+  const japaneseVoices = voices.filter((voice) => voice.lang.startsWith("ja"));
+  if (preferFemale) {
+    const femaleVoice = japaneseVoices.find((voice) => femaleVoiceRegex.test(voice.name));
+    if (femaleVoice) return femaleVoice;
+  }
+  return japaneseVoices[0] ?? null;
 }
 
 export default function ShadowingPage() {
@@ -23,11 +25,14 @@ export default function ShadowingPage() {
   const [loop, setLoop] = useState(false);
   const [loading, setLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const voice = "female1";
 
   const current = playlist[index];
 
   const fetchTts = async (text: string) => {
-    const res = await fetch(`/api/tts?text=${encodeURIComponent(text)}`);
+    const res = await fetch(
+      `/api/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(voice)}`
+    );
     if (!res.ok) return null;
     const contentType = res.headers.get("content-type") ?? "";
     if (!contentType.includes("audio")) return null;
@@ -39,8 +44,8 @@ export default function ShadowingPage() {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "ja-JP";
     utterance.rate = rate;
-    const voice = getJapaneseVoice();
-    if (voice) utterance.voice = voice;
+    const selectedVoice = getJapaneseVoice(voice.startsWith("female"));
+    if (selectedVoice) utterance.voice = selectedVoice;
     utterance.onend = () => {
       if (loop) {
         playWebSpeech(text);

@@ -9,7 +9,9 @@ import { useFavorites } from "@/hooks/useFavorites";
 
 export default function PhraseDetailPage() {
   const params = useParams<{ id: string }>();
-  const phrase = phrases.find((item) => item.id === params.id);
+  const phraseIndex = phrases.findIndex((item) => item.id === params.id);
+  const phrase = phraseIndex >= 0 ? phrases[phraseIndex] : null;
+  const nextPhrase = phraseIndex >= 0 ? phrases[phraseIndex + 1] : null;
   const { favorites, toggleFavorite } = useFavorites();
 
   if (!phrase) {
@@ -55,6 +57,20 @@ export default function PhraseDetailPage() {
           </div>
         )}
         <AudioPlayer text={phrase.jp} />
+        <div className="flex items-center justify-between">
+          <Link href="/library" className="btn">
+            返回句子库
+          </Link>
+          {nextPhrase ? (
+            <Link href={`/phrase/${nextPhrase.id}`} className="btn btn-primary">
+              下一个
+            </Link>
+          ) : (
+            <button className="btn" disabled>
+              已是最后一条
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

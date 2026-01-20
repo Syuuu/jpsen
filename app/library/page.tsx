@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PhraseCard } from "@/components/PhraseCard";
 import { allTags, phrases, PhraseTone } from "@/data/phrases";
 
@@ -10,10 +10,13 @@ const toneLabels: Record<PhraseTone, string> = {
   soft: "柔和"
 };
 
+const pageSize = 12;
+
 export default function LibraryPage() {
   const [query, setQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState("all");
   const [selectedTone, setSelectedTone] = useState("all");
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     return phrases.filter((phrase) => {
@@ -25,6 +28,13 @@ export default function LibraryPage() {
       return matchesQuery && matchesTag && matchesTone;
     });
   }, [query, selectedTag, selectedTone]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, selectedTag, selectedTone]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="space-y-6">
@@ -65,9 +75,31 @@ export default function LibraryPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {filtered.map((phrase) => (
+        {pageItems.map((phrase) => (
           <PhraseCard key={phrase.id} phrase={phrase} />
         ))}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-sm text-slate-500">
+          第 {page} / {totalPages} 页，共 {filtered.length} 条
+        </span>
+        <div className="flex gap-2">
+          <button
+            className="btn"
+            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+            disabled={page === 1}
+          >
+            上一页
+          </button>
+          <button
+            className="btn"
+            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+            disabled={page === totalPages}
+          >
+            下一页
+          </button>
+        </div>
       </div>
     </div>
   );

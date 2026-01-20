@@ -3,18 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 
 const rates = [0.75, 0.9, 1.0, 1.1, 1.25];
+const femaleVoiceRegex = /female|woman|girl|女|女性|ガール/i;
 
-function getJapaneseVoice() {
+function getJapaneseVoice(preferFemale: boolean) {
   if (typeof window === "undefined") return null;
   const voices = window.speechSynthesis.getVoices();
-  return (
-    voices.find((voice) => voice.lang === "ja-JP") ||
-    voices.find((voice) => voice.lang.startsWith("ja")) ||
-    null
-  );
+  const japaneseVoices = voices.filter((voice) => voice.lang.startsWith("ja"));
+  if (preferFemale) {
+    const femaleVoice = japaneseVoices.find((voice) => femaleVoiceRegex.test(voice.name));
+    if (femaleVoice) return femaleVoice;
+  }
+  return japaneseVoices[0] ?? null;
 }
 
-export function AudioPlayer({ text }: { text: string }) {
+export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?: string }) {
   const [rate, setRate] = useState(1.0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,7 +38,9 @@ export function AudioPlayer({ text }: { text: string }) {
     if (audioUrl) return audioUrl;
     setLoading(true);
     try {
-      const res = await fetch(`/api/tts?text=${encodeURIComponent(text)}`);
+      const res = await fetch(
+        `/api/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(voice)}`
+      );
       if (!res.ok) return null;
       const contentType = res.headers.get("content-type") ?? "";
       if (!contentType.includes("audio")) return null;
@@ -56,8 +60,9 @@ export function AudioPlayer({ text }: { text: string }) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "ja-JP";
     utterance.rate = rate;
-    const voice = getJapaneseVoice();
-    if (voice) utterance.voice = voice;
+    const preferred = voice.startsWith("female");
+    const selectedVoice = getJapaneseVoice(preferred);
+    if (selectedVoice) utterance.voice = selectedVoice;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   };
