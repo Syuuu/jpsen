@@ -16,6 +16,21 @@ function pickJapaneseVoice(voices: SpeechSynthesisVoice[], preferFemale: boolean
   return japaneseVoices[0] ?? null;
 }
 
+function waitForVoices(synth: SpeechSynthesis) {
+  return new Promise<SpeechSynthesisVoice[]>((resolve) => {
+    const voices = synth.getVoices();
+    if (voices.length > 0) {
+      resolve(voices);
+      return;
+    }
+    const handle = () => {
+      resolve(synth.getVoices());
+      synth.onvoiceschanged = null;
+    };
+    synth.onvoiceschanged = handle;
+  });
+}
+
 export default function ShadowingPage() {
   const playlist = useMemo(() => phrases.slice(0, 12), []);
   const [index, setIndex] = useState(0);
@@ -40,11 +55,11 @@ export default function ShadowingPage() {
   const playWebSpeech = (text: string) => {
     if (typeof window === "undefined") return;
     const synth = window.speechSynthesis;
-    const speak = () => {
+    const speak = (voices: SpeechSynthesisVoice[]) => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "ja-JP";
       utterance.rate = rate;
-      const selectedVoice = pickJapaneseVoice(synth.getVoices(), voice.startsWith("female"));
+      const selectedVoice = pickJapaneseVoice(voices, voice.startsWith("female"));
       if (selectedVoice) utterance.voice = selectedVoice;
       utterance.onend = () => {
         if (loop) {
@@ -54,17 +69,7 @@ export default function ShadowingPage() {
       synth.cancel();
       synth.speak(utterance);
     };
-
-    const voices = synth.getVoices();
-    if (voices.length > 0) {
-      speak();
-    } else {
-      synth.onvoiceschanged = () => {
-        speak();
-        synth.onvoiceschanged = null;
-      };
-      speak();
-    }
+    waitForVoices(synth).then((voices) => speak(voices));
   };
 
   const play = async () => {
@@ -78,7 +83,11 @@ export default function ShadowingPage() {
         audio.playbackRate = rate;
         audio.loop = loop;
         audioRef.current = audio;
-        audio.play();
+        audio
+          .play()
+          .catch(() => {
+            playWebSpeech(current.jp);
+          });
         audio.onended = () => URL.revokeObjectURL(url);
         return;
       }

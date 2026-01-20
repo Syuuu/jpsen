@@ -14,6 +14,21 @@ function pickJapaneseVoice(voices: SpeechSynthesisVoice[], preferFemale: boolean
   return japaneseVoices[0] ?? null;
 }
 
+function waitForVoices(synth: SpeechSynthesis) {
+  return new Promise<SpeechSynthesisVoice[]>((resolve) => {
+    const voices = synth.getVoices();
+    if (voices.length > 0) {
+      resolve(voices);
+      return;
+    }
+    const handle = () => {
+      resolve(synth.getVoices());
+      synth.onvoiceschanged = null;
+    };
+    synth.onvoiceschanged = handle;
+  });
+}
+
 export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?: string }) {
   const [rate, setRate] = useState(1.0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -56,27 +71,17 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
   const playWithWebSpeech = () => {
     if (typeof window === "undefined") return;
     const synth = window.speechSynthesis;
-    const speak = () => {
+    const speak = (voices: SpeechSynthesisVoice[]) => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "ja-JP";
       utterance.rate = rate;
       const preferred = voice.startsWith("female");
-      const selectedVoice = pickJapaneseVoice(synth.getVoices(), preferred);
+      const selectedVoice = pickJapaneseVoice(voices, preferred);
       if (selectedVoice) utterance.voice = selectedVoice;
       synth.cancel();
       synth.speak(utterance);
     };
-
-    const voices = synth.getVoices();
-    if (voices.length > 0) {
-      speak();
-    } else {
-      synth.onvoiceschanged = () => {
-        speak();
-        synth.onvoiceschanged = null;
-      };
-      speak();
-    }
+    waitForVoices(synth).then((voices) => speak(voices));
   };
 
   const handlePlay = async () => {
@@ -85,7 +90,11 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
       const audio = new Audio(url);
       audio.playbackRate = rate;
       audioRef.current = audio;
-      audio.play();
+      audio
+        .play()
+        .catch(() => {
+          playWithWebSpeech();
+        });
       return;
     }
     playWithWebSpeech();
