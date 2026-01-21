@@ -2,12 +2,27 @@ import { NextRequest } from "next/server";
 import { createHash } from "crypto";
 
 const audioCache = new Map<string, ArrayBuffer>();
+const openAiVoices = new Set([
+  "alloy",
+  "ash",
+  "coral",
+  "echo",
+  "fable",
+  "onyx",
+  "nova",
+  "sage",
+  "shimmer"
+]);
 
 function createCacheKey(text: string, voice: string | null, provider: string | undefined) {
   const hash = createHash("sha256")
     .update(JSON.stringify({ text, voice, provider }))
     .digest("hex");
   return hash;
+}
+
+function isUiVoiceLabel(voice: string | null) {
+  return Boolean(voice && /^(female|male)\d*$/i.test(voice));
 }
 
 export async function GET(request: NextRequest) {
@@ -22,24 +37,25 @@ export async function GET(request: NextRequest) {
     return new Response(null, { status: 204 });
   }
 
-  const cacheKey = createCacheKey(text, voiceParam, provider);
-  const cached = audioCache.get(cacheKey);
-  if (cached) {
-    return new Response(cached.slice(0), {
-      headers: {
-        "Content-Type": "audio/mpeg",
-        "X-Cache": "HIT"
-      }
-    });
-  }
-
   if (provider === "voicerss") {
     const apiKey = process.env.TTS_API_KEY;
     if (!apiKey) {
       return new Response("Missing TTS_API_KEY", { status: 400 });
     }
     const voice = process.env.TTS_VOICE ?? "ja-jp";
-    const voiceArg = voiceParam ? `&v=${encodeURIComponent(voiceParam)}` : "";
+    const resolvedVoiceParam = voiceParam && !isUiVoiceLabel(voiceParam) ? voiceParam : null;
+    const cacheVoice = resolvedVoiceParam ? `${voice}:${resolvedVoiceParam}` : voice;
+    const cacheKey = createCacheKey(text, cacheVoice, provider);
+    const cached = audioCache.get(cacheKey);
+    if (cached) {
+      return new Response(cached.slice(0), {
+        headers: {
+          "Content-Type": "audio/mpeg",
+          "X-Cache": "HIT"
+        }
+      });
+    }
+    const voiceArg = resolvedVoiceParam ? `&v=${encodeURIComponent(resolvedVoiceParam)}` : "";
     const url = `https://api.voicerss.org/?key=${apiKey}&hl=${voice}&src=${encodeURIComponent(
       text
     )}&c=MP3&f=44khz_16bit_stereo${voiceArg}`;
@@ -64,7 +80,21 @@ export async function GET(request: NextRequest) {
     }
     const model = process.env.OPENAI_TTS_MODEL ?? "gpt-4o-mini-tts";
     const format = process.env.OPENAI_TTS_FORMAT ?? "mp3";
-    const voice = voiceParam ?? process.env.TTS_VOICE ?? "alloy";
+    const candidateVoice = voiceParam && !isUiVoiceLabel(voiceParam) ? voiceParam : null;
+    const voice =
+      (candidateVoice && openAiVoices.has(candidateVoice) ? candidateVoice : null) ??
+      process.env.TTS_VOICE ??
+      "alloy";
+    const cacheKey = createCacheKey(text, voice, provider);
+    const cached = audioCache.get(cacheKey);
+    if (cached) {
+      return new Response(cached.slice(0), {
+        headers: {
+          "Content-Type": "audio/mpeg",
+          "X-Cache": "HIT"
+        }
+      });
+    }
     const res = await fetch("https://api.openai.com/v1/audio/speech", {
       method: "POST",
       headers: {
