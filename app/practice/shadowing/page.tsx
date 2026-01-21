@@ -37,6 +37,7 @@ export default function ShadowingPage() {
   const [rate, setRate] = useState(1.0);
   const [loop, setLoop] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const voice = "female1";
 
@@ -54,6 +55,7 @@ export default function ShadowingPage() {
 
   const playWebSpeech = (text: string) => {
     if (typeof window === "undefined") return;
+    setSource("browser");
     const synth = window.speechSynthesis;
     const speak = (voices: SpeechSynthesisVoice[]) => {
       const utterance = new SpeechSynthesisUtterance(text);
@@ -89,6 +91,7 @@ export default function ShadowingPage() {
             playWebSpeech(current.jp);
           });
         audio.onended = () => URL.revokeObjectURL(url);
+        setSource("server");
         return;
       }
       playWebSpeech(current.jp);
@@ -103,6 +106,7 @@ export default function ShadowingPage() {
     if (typeof window !== "undefined") {
       window.speechSynthesis.cancel();
     }
+    setSource("idle");
   };
 
   return (
@@ -146,6 +150,12 @@ export default function ShadowingPage() {
             >
               {loop ? "循环中" : "循环"}
             </button>
+          </div>
+          <div className="text-xs text-slate-500">
+            播放来源：
+            {source === "server" && "TTS"}
+            {source === "browser" && "浏览器"}
+            {source === "idle" && "未播放"}
           </div>
           <div className="flex items-center justify-between">
             <button

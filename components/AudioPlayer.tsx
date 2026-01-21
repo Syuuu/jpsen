@@ -33,6 +33,7 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
   const [rate, setRate] = useState(1.0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
 
   const playWithWebSpeech = () => {
     if (typeof window === "undefined") return;
+    setSource("browser");
     const synth = window.speechSynthesis;
     const speak = (voices: SpeechSynthesisVoice[]) => {
       const utterance = new SpeechSynthesisUtterance(text);
@@ -95,6 +97,7 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
         .catch(() => {
           playWithWebSpeech();
         });
+      setSource("server");
       return;
     }
     playWithWebSpeech();
@@ -108,6 +111,7 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
     if (typeof window !== "undefined") {
       window.speechSynthesis.cancel();
     }
+    setSource("idle");
   };
 
   return (
@@ -131,6 +135,12 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
             {item}x
           </button>
         ))}
+      </div>
+      <div className="text-xs text-slate-500">
+        播放来源：
+        {source === "server" && "TTS"}
+        {source === "browser" && "浏览器"}
+        {source === "idle" && "未播放"}
       </div>
     </div>
   );
