@@ -4,7 +4,8 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "JP Phrases Trainer",
-  description: "Daily Japanese phrase trainer with SRS and shadowing."
+  description: "Daily Japanese phrase trainer with SRS and shadowing.",
+  manifest: "/manifest.webmanifest"
 };
 
 export default function RootLayout({
@@ -29,7 +30,7 @@ export default function RootLayout({
                 跟读
               </Link>
               <Link href="/practice/cloze" className="hover:text-accent">
-                填空
+                听力
               </Link>
             </nav>
           </div>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTtsSettings } from "@/hooks/useTtsSettings";
+import { prefersFemaleVoice } from "@/lib/tts";
 
 const rates = [0.75, 0.9, 1.0, 1.1, 1.25];
 const femaleVoiceRegex = /female|woman|girl|女|女性|ガール/i;
@@ -29,7 +31,9 @@ function waitForVoices(synth: SpeechSynthesis) {
   });
 }
 
-export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?: string }) {
+export function AudioPlayer({ text, voice }: { text: string; voice?: string }) {
+  const { settings } = useTtsSettings();
+  const activeVoice = voice ?? settings.voice;
   const [rate, setRate] = useState(1.0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,6 +47,13 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
   }, [audioUrl]);
 
   useEffect(() => {
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
+    setAudioUrl(null);
+  }, [text, activeVoice]);
+
+  useEffect(() => {
     if (audioRef.current) {
       audioRef.current.playbackRate = rate;
     }
@@ -53,7 +64,7 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(voice)}`
+        `/api/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(activeVoice)}`
       );
       if (!res.ok || res.status === 204) return null;
       const contentType = res.headers.get("content-type") ?? "";
@@ -77,7 +88,7 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "ja-JP";
       utterance.rate = rate;
-      const preferred = voice.startsWith("female");
+      const preferred = prefersFemaleVoice(activeVoice);
       const selectedVoice = pickJapaneseVoice(voices, preferred);
       if (selectedVoice) utterance.voice = selectedVoice;
       synth.cancel();
