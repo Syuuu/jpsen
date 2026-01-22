@@ -18,7 +18,9 @@ export function PhraseCard({
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
             <p className="text-slate-500">场景对话</p>
             <p className="mt-2">A：{phrase.dialogue.a}</p>
+            <p className="text-slate-500">A：{phrase.dialogue.cn.a}</p>
             <p>B：{phrase.dialogue.b}</p>
+            <p className="text-slate-500">B：{phrase.dialogue.cn.b}</p>
           </div>
         )}
         <TagChips tags={phrase.tags} tone={phrase.tone} />

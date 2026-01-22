@@ -16,6 +16,7 @@ const rates = [0.75, 0.9, 1.0, 1.1, 1.25];
 type DialogueLine = {
   label: string;
   text: string;
+  cnText?: string;
   voice: string;
   preferFemale: boolean;
 };
@@ -42,12 +43,14 @@ export default function ShadowingPage() {
         {
           label: "A",
           text: current.dialogue.a,
+          cnText: current.dialogue.cn.a,
           voice: primaryVoice,
           preferFemale: isPreferFemaleVoice(primaryVoice)
         },
         {
           label: "B",
           text: current.dialogue.b,
+          cnText: current.dialogue.cn.b,
           voice: secondaryVoice,
           preferFemale: isPreferFemaleVoice(secondaryVoice)
         }
@@ -180,6 +183,11 @@ export default function ShadowingPage() {
             <div key={line.label} className="text-sm text-slate-600">
               <span className="mr-2 font-semibold text-slate-700">{line.label}：</span>
               <span className="text-base text-slate-900">{line.text}</span>
+              {line.cnText && (
+                <span className="block text-sm text-slate-500">
+                  {line.label}：{line.cnText}
+                </span>
+              )}
             </div>
           ))}
         </div>
