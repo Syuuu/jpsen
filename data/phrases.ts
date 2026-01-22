@@ -49,7 +49,8 @@ export const phrases: Phrase[] = [
     kana: "すみません れじは どこですか",
     tags: ["便利店"],
     tone: "polite",
-    level: "easy"
+    level: "easy",
+    dialogue: { a: "すみません、レジはどこですか？", b: "あちらの奥です。" }
   },
   {
     id: "p005",
@@ -145,7 +146,8 @@ export const phrases: Phrase[] = [
     cn: "不好意思，可以帮忙拍照吗？",
     tags: ["旅行", "请求"],
     tone: "polite",
-    level: "easy"
+    level: "easy",
+    dialogue: { a: "すみません、写真お願いできますか？", b: "はい、撮りますね。" }
   },
   {
     id: "p017",
@@ -281,7 +283,8 @@ export const phrases: Phrase[] = [
     cn: "这里有人坐吗？",
     tags: ["电车", "旅行"],
     tone: "polite",
-    level: "easy"
+    level: "easy",
+    dialogue: { a: "ここ、空いてますか？", b: "どうぞ、座ってください。" }
   },
   {
     id: "p034",
@@ -498,6 +501,78 @@ export const phrases: Phrase[] = [
     tags: ["朋友聊天", "确认"],
     tone: "soft",
     level: "mid"
+  },
+  {
+    id: "p061",
+    jp: "今日の宿題ってどこまで？",
+    cn: "今天的作业做到哪一部分？",
+    tags: ["学校", "作业", "朋友聊天"],
+    tone: "casual",
+    level: "easy",
+    dialogue: { a: "今日の宿題ってどこまで？", b: "プリントの3問目までだよ。" }
+  },
+  {
+    id: "p062",
+    jp: "先生、もう一度説明していただけますか？",
+    cn: "老师，可以再解释一次吗？",
+    tags: ["学校", "课堂", "请求"],
+    tone: "polite",
+    level: "mid",
+    dialogue: { a: "先生、もう一度説明していただけますか？", b: "もちろんです。ポイントを整理しますね。" }
+  },
+  {
+    id: "p063",
+    jp: "図書館は何時まで開いてますか？",
+    cn: "图书馆开到几点？",
+    tags: ["学校", "图书馆", "询问"],
+    tone: "polite",
+    level: "easy",
+    dialogue: { a: "図書館は何時まで開いてますか？", b: "平日は20時までです。" }
+  },
+  {
+    id: "p064",
+    jp: "明日の発表、緊張するね。",
+    cn: "明天的发表好紧张啊。",
+    tags: ["学校", "课堂", "朋友聊天"],
+    tone: "casual",
+    level: "easy",
+    dialogue: { a: "明日の発表、緊張するね。", b: "うん、でも一緒に練習しよう。" }
+  },
+  {
+    id: "p065",
+    jp: "この問題、解き方教えてくれる？",
+    cn: "这道题能教我解法吗？",
+    tags: ["学校", "请求", "朋友聊天"],
+    tone: "soft",
+    level: "easy",
+    dialogue: { a: "この問題、解き方教えてくれる？", b: "いいよ、一緒に考えよう。" }
+  },
+  {
+    id: "p066",
+    jp: "次の授業はどこだっけ？",
+    cn: "下一节课在哪里来着？",
+    tags: ["学校", "课堂", "确认"],
+    tone: "casual",
+    level: "easy",
+    dialogue: { a: "次の授業はどこだっけ？", b: "3階のB教室だよ。" }
+  },
+  {
+    id: "p067",
+    jp: "グループワーク、どの役割にする？",
+    cn: "小组作业要选哪个角色？",
+    tags: ["学校", "课堂", "讨论"],
+    tone: "casual",
+    level: "mid",
+    dialogue: { a: "グループワーク、どの役割にする？", b: "私は発表担当やるよ。" }
+  },
+  {
+    id: "p068",
+    jp: "学食、混んでるね。",
+    cn: "学生食堂好挤啊。",
+    tags: ["学校", "午饭", "朋友聊天"],
+    tone: "casual",
+    level: "easy",
+    dialogue: { a: "学食、混んでるね。", b: "じゃあ、今日は購買で済ませよう。" }
   }
 ];
 
