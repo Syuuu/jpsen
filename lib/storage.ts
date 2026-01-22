@@ -1,8 +1,6 @@
 export const storageKeys = {
   favorites: "jp-trainer:favorites",
-  srs: "jp-trainer:srs",
-  ttsSettings: "jp-trainer:tts-settings",
-  openedPhrases: "jp-trainer:opened-phrases"
+  srs: "jp-trainer:srs"
 };
 
 export function readStorage<T>(key: string, fallback: T): T {
