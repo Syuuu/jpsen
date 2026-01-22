@@ -9,7 +9,7 @@ import {
   waitForVoices
 } from "@/lib/tts";
 
-const rates = [0.75, 0.9, 1.0, 1.1, 1.25];
+const rates = [0.9, 1.0, 1.1, 1.25, 1.4];
 
 type DialogueLine = {
   label: string;
@@ -18,7 +18,7 @@ type DialogueLine = {
 
 export function DialogueAudioPlayer({ lines }: { lines: DialogueLine[] }) {
   const { voice } = useTtsVoice();
-  const [rate, setRate] = useState(1.0);
+  const [rate, setRate] = useState(1.1);
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);

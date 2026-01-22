@@ -5,7 +5,6 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { phrases } from "@/data/phrases";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { DialogueAudioPlayer } from "@/components/DialogueAudioPlayer";
 import { TagChips } from "@/components/TagChips";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useOpenedPhrases } from "@/hooks/useOpenedPhrases";
@@ -61,23 +60,14 @@ export default function PhraseDetailPage() {
         )}
         {phrase.dialogue && (
           <div className="rounded-xl border border-slate-200 p-4 text-sm">
-            <p className="font-semibold text-slate-600">对话</p>
+            <p className="font-semibold text-slate-600">💬 对话</p>
             <p className="mt-2">A：{phrase.dialogue.a}</p>
             <p className="text-slate-500">A：{phrase.dialogue.cn.a}</p>
             <p>B：{phrase.dialogue.b}</p>
             <p className="text-slate-500">B：{phrase.dialogue.cn.b}</p>
           </div>
         )}
-        {phrase.dialogue ? (
-          <DialogueAudioPlayer
-            lines={[
-              { label: "A", text: phrase.dialogue.a },
-              { label: "B", text: phrase.dialogue.b }
-            ]}
-          />
-        ) : (
-          <AudioPlayer text={phrase.jp} />
-        )}
+        <AudioPlayer text={phrase.jp} />
         <div className="flex items-center justify-between">
           <Link href="/library" className="btn">
             返回会话库

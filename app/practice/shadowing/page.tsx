@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { phrases } from "@/data/phrases";
 import { TagChips } from "@/components/TagChips";
 import { useTtsVoice } from "@/hooks/useTtsVoice";
+import { useOpenedPhrases } from "@/hooks/useOpenedPhrases";
 import {
   isPreferFemaleVoice,
   pickAlternateVoice,
@@ -11,7 +13,7 @@ import {
   waitForVoices
 } from "@/lib/tts";
 
-const rates = [0.75, 0.9, 1.0, 1.1, 1.25];
+const rates = [0.9, 1.0, 1.1, 1.25, 1.4];
 
 type DialogueLine = {
   label: string;
@@ -22,10 +24,14 @@ type DialogueLine = {
 };
 
 export default function ShadowingPage() {
-  const playlist = useMemo(() => phrases.slice(0, 12), []);
+  const { opened } = useOpenedPhrases();
+  const playlist = useMemo(() => {
+    const learned = phrases.filter((phrase) => opened.includes(phrase.id));
+    return learned;
+  }, [opened]);
   const { voice } = useTtsVoice();
   const [index, setIndex] = useState(0);
-  const [rate, setRate] = useState(1.0);
+  const [rate, setRate] = useState(1.1);
   const [loop, setLoop] = useState(false);
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
@@ -33,6 +39,10 @@ export default function ShadowingPage() {
   const playIdRef = useRef(0);
 
   const current = playlist[index];
+
+  useEffect(() => {
+    setIndex(0);
+  }, [playlist.length]);
 
   const dialogueLines = useMemo<DialogueLine[]>(() => {
     if (!current) return [];
@@ -164,8 +174,25 @@ export default function ShadowingPage() {
     };
   }, [index]);
 
+  if (playlist.length === 0) {
+    return (
+      <div className="card text-center">
+        <p className="text-lg font-semibold">还没有学习记录</p>
+        <p className="text-slate-600">跟读仅展示学习过的内容。</p>
+      </div>
+    );
+  }
+
   if (!current) {
-    return null;
+    return (
+      <div className="card text-center space-y-3">
+        <p className="text-lg font-semibold">跟读完成！</p>
+        <p className="text-slate-600">已完成本次学习内容的跟读。</p>
+        <Link href="/practice/cloze" className="btn btn-primary">
+          进入听力测试
+        </Link>
+      </div>
+    );
   }
 
   return (
@@ -178,6 +205,7 @@ export default function ShadowingPage() {
       </div>
 
       <div className="card space-y-4">
+        <p className="text-sm text-slate-500">仅展示你学习过的内容。</p>
         <div className="space-y-2">
           {dialogueLines.map((line) => (
             <div key={line.label} className="text-sm text-slate-600">

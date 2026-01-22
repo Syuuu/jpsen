@@ -16,7 +16,7 @@ export function PhraseCard({
         <div className="text-sm text-slate-600">{phrase.cn}</div>
         {showDialogue && phrase.dialogue && (
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
-            <p className="text-slate-500">场景对话</p>
+            <p className="text-slate-500">💬 场景对话</p>
             <p className="mt-2">A：{phrase.dialogue.a}</p>
             <p className="text-slate-500">A：{phrase.dialogue.cn.a}</p>
             <p>B：{phrase.dialogue.b}</p>
