@@ -1,28 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { phrases } from "@/data/phrases";
 import { PhraseCard } from "@/components/PhraseCard";
 import { ProgressMeter } from "@/components/ProgressMeter";
 import { useSrs } from "@/hooks/useSrs";
 import { useOpenedPhrases } from "@/hooks/useOpenedPhrases";
 import { dailyReviewLimit } from "@/lib/srs";
+import { readStorage, storageKeys, writeStorage } from "@/lib/storage";
+
+const shuffle = <T,>(list: T[]) => {
+  const next = [...list];
+  for (let i = next.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+};
 
 export default function HomePage() {
   const { dueToday } = useSrs();
   const { opened } = useOpenedPhrases();
   const goal = dailyReviewLimit;
   const completed = Math.max(0, goal - dueToday.length);
+  const [showReviewNudge, setShowReviewNudge] = useState(false);
   const continueList = useMemo(() => {
-    const openedSet = new Set(opened);
-    return [...phrases].sort((a, b) => {
-      const aOpened = openedSet.has(a.id);
-      const bOpened = openedSet.has(b.id);
-      if (aOpened === bOpened) return 0;
-      return aOpened ? 1 : -1;
-    });
+    return shuffle(phrases);
   }, [opened]);
+
+  useEffect(() => {
+    if (opened.length === 0 || opened.length % 20 !== 0) return;
+    const lastNotified = readStorage<number>(storageKeys.reviewNudge, 0);
+    if (opened.length <= lastNotified) return;
+    setShowReviewNudge(true);
+    writeStorage(storageKeys.reviewNudge, opened.length);
+    const timer = window.setTimeout(() => setShowReviewNudge(false), 5000);
+    return () => window.clearTimeout(timer);
+  }, [opened.length]);
 
   return (
     <div className="space-y-8">
@@ -43,6 +58,11 @@ export default function HomePage() {
             搜索会话库
           </Link>
         </div>
+        {showReviewNudge && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            你已经学习了 {opened.length} 句，可以进行复习啦。
+          </div>
+        )}
       </section>
 
       <section className="space-y-4">
