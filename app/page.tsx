@@ -50,6 +50,16 @@ export default function HomePage() {
     return () => window.clearTimeout(timer);
   }, [opened.length]);
 
+  useEffect(() => {
+    if (opened.length === 0 || opened.length % 20 !== 0) return;
+    const lastNotified = readStorage<number>(storageKeys.reviewNudge, 0);
+    if (opened.length <= lastNotified) return;
+    setShowReviewNudge(true);
+    writeStorage(storageKeys.reviewNudge, opened.length);
+    const timer = window.setTimeout(() => setShowReviewNudge(false), 5000);
+    return () => window.clearTimeout(timer);
+  }, [opened.length]);
+
   return (
     <div className="space-y-8">
       <section className="card space-y-4">
