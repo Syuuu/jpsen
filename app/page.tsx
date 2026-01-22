@@ -1,16 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { phrases } from "@/data/phrases";
 import { PhraseCard } from "@/components/PhraseCard";
 import { ProgressMeter } from "@/components/ProgressMeter";
 import { useSrs } from "@/hooks/useSrs";
+import { useOpenedPhrases } from "@/hooks/useOpenedPhrases";
 import { dailyReviewLimit } from "@/lib/srs";
 
 export default function HomePage() {
   const { dueToday } = useSrs();
+  const { opened } = useOpenedPhrases();
   const goal = dailyReviewLimit;
   const completed = Math.max(0, goal - dueToday.length);
+  const continueList = useMemo(() => {
+    const openedSet = new Set(opened);
+    return [...phrases].sort((a, b) => {
+      const aOpened = openedSet.has(a.id);
+      const bOpened = openedSet.has(b.id);
+      if (aOpened === bOpened) return 0;
+      return aOpened ? 1 : -1;
+    });
+  }, [opened]);
 
   return (
     <div className="space-y-8">
@@ -41,7 +53,7 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          {phrases.slice(0, 4).map((phrase) => (
+          {continueList.slice(0, 4).map((phrase) => (
             <PhraseCard key={phrase.id} phrase={phrase} />
           ))}
         </div>
