@@ -184,7 +184,9 @@ export default function ShadowingPage() {
               <span className="mr-2 font-semibold text-slate-700">{line.label}：</span>
               <span className="text-base text-slate-900">{line.text}</span>
               {line.cnText && (
-                <span className="block text-sm text-slate-500">中：{line.cnText}</span>
+                <span className="block text-sm text-slate-500">
+                  {line.label}：{line.cnText}
+                </span>
               )}
             </div>
           ))}
