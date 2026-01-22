@@ -19,10 +19,15 @@ export default function LibraryPage() {
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
-    return phrases.filter((phrase) => {
+    return phrases.filter((phrase) => phrase.dialogue).filter((phrase) => {
+      const normalizedQuery = query.toLowerCase();
       const matchesQuery =
-        phrase.jp.toLowerCase().includes(query.toLowerCase()) ||
-        phrase.cn.toLowerCase().includes(query.toLowerCase());
+        phrase.jp.toLowerCase().includes(normalizedQuery) ||
+        phrase.cn.toLowerCase().includes(normalizedQuery) ||
+        phrase.dialogue?.a.toLowerCase().includes(normalizedQuery) ||
+        phrase.dialogue?.b.toLowerCase().includes(normalizedQuery) ||
+        phrase.dialogueCn?.a.toLowerCase().includes(normalizedQuery) ||
+        phrase.dialogueCn?.b.toLowerCase().includes(normalizedQuery);
       const matchesTag = selectedTag === "all" || phrase.tags.includes(selectedTag);
       const matchesTone = selectedTone === "all" || phrase.tone === selectedTone;
       return matchesQuery && matchesTag && matchesTone;
@@ -39,7 +44,7 @@ export default function LibraryPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <h1 className="text-2xl font-semibold">句子库</h1>
+        <h1 className="text-2xl font-semibold">会话库</h1>
         <div className="grid gap-3 md:grid-cols-3">
           <input
             value={query}
@@ -74,11 +79,15 @@ export default function LibraryPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {pageItems.map((phrase) => (
-          <PhraseCard key={phrase.id} phrase={phrase} />
-        ))}
-      </div>
+      {pageItems.length === 0 ? (
+        <div className="card text-slate-600">暂无匹配的场景会话。</div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {pageItems.map((phrase) => (
+            <PhraseCard key={phrase.id} phrase={phrase} showDialogue />
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-sm text-slate-500">
