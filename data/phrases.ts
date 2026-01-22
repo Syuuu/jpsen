@@ -14,7 +14,7 @@ export type Phrase = {
   notes?: string;
 };
 
-export const phrases: Phrase[] = [
+const basePhrases: Phrase[] = [
   {
     id: "p001",
     jp: "今日ちょっと早めに上がってもいい？",
@@ -498,7 +498,144 @@ export const phrases: Phrase[] = [
     tags: ["朋友聊天", "确认"],
     tone: "soft",
     level: "mid"
+  },
+  {
+    id: "p061",
+    jp: "明日のテスト、範囲どこまで？",
+    cn: "明天的考试范围到哪里？",
+    tags: ["学校", "考试"],
+    tone: "casual",
+    level: "easy",
+    dialogue: {
+      a: "明日のテスト、範囲どこまで？",
+      b: "教科書の三章までだよ。"
+    }
+  },
+  {
+    id: "p062",
+    jp: "授業のあとで図書館に寄らない？",
+    cn: "下课后要不要去图书馆？",
+    tags: ["学校", "邀请"],
+    tone: "soft",
+    level: "easy",
+    dialogue: {
+      a: "授業のあとで図書館に寄らない？",
+      b: "いいね、レポート進めよう。"
+    }
+  },
+  {
+    id: "p063",
+    jp: "この問題、どう解けばいい？",
+    cn: "这道题该怎么解？",
+    tags: ["学校", "作业"],
+    tone: "soft",
+    level: "mid",
+    dialogue: {
+      a: "この問題、どう解けばいい？",
+      b: "まず公式を当てはめてみよう。"
+    }
+  },
+  {
+    id: "p064",
+    jp: "レポートの締め切り、延びたって聞いた。",
+    cn: "听说报告的截止日期延后了。",
+    tags: ["学校", "作业"],
+    tone: "casual",
+    level: "mid",
+    dialogue: {
+      a: "レポートの締め切り、延びたって聞いた。",
+      b: "うん、来週の金曜までになったよ。"
+    }
+  },
+  {
+    id: "p065",
+    jp: "部活の見学、今日行ってみる？",
+    cn: "今天要不要去社团参观？",
+    tags: ["学校", "社团"],
+    tone: "casual",
+    level: "easy",
+    dialogue: {
+      a: "部活の見学、今日行ってみる？",
+      b: "行く！雰囲気を見てみたい。"
+    }
+  },
+  {
+    id: "p066",
+    jp: "席、こっち空いてるよ。",
+    cn: "这边的座位空着哦。",
+    tags: ["学校", "课堂"],
+    tone: "casual",
+    level: "easy",
+    dialogue: {
+      a: "席、こっち空いてるよ。",
+      b: "ありがとう、隣いい？"
+    }
+  },
+  {
+    id: "p067",
+    jp: "先生に質問してもいいかな。",
+    cn: "我可以问老师问题吗？",
+    tags: ["学校", "课堂"],
+    tone: "soft",
+    level: "easy",
+    dialogue: {
+      a: "先生に質問してもいいかな。",
+      b: "今のうちに聞いておこう。"
+    }
+  },
+  {
+    id: "p068",
+    jp: "このサークル、活動は週何回？",
+    cn: "这个社团每周活动几次？",
+    tags: ["学校", "社团"],
+    tone: "casual",
+    level: "mid",
+    dialogue: {
+      a: "このサークル、活動は週何回？",
+      b: "だいたい週2回くらいだよ。"
+    }
+  },
+  {
+    id: "p069",
+    jp: "今日の課題、提出した？",
+    cn: "今天的作业交了吗？",
+    tags: ["学校", "作业"],
+    tone: "casual",
+    level: "easy",
+    dialogue: {
+      a: "今日の課題、提出した？",
+      b: "さっきオンラインで出したよ。"
+    }
+  },
+  {
+    id: "p070",
+    jp: "試験が終わったら、一緒にご飯行こう。",
+    cn: "考试结束后一起去吃饭吧。",
+    tags: ["学校", "朋友聊天"],
+    tone: "soft",
+    level: "easy",
+    dialogue: {
+      a: "試験が終わったら、一緒にご飯行こう。",
+      b: "賛成！頑張ろう。"
+    }
   }
 ];
+
+const dialogueFallbacks: Record<PhraseTone, string> = {
+  casual: "うん、いいよ。",
+  polite: "はい、わかりました。",
+  soft: "うん、大丈夫だよ。"
+};
+
+export const phrases: Phrase[] = basePhrases.map((phrase) => {
+  if (phrase.dialogue) return phrase;
+  return {
+    ...phrase,
+    dialogue: {
+      a: phrase.jp,
+      b: dialogueFallbacks[phrase.tone]
+    }
+  };
+});
 
 export const allTags = Array.from(new Set(phrases.flatMap((phrase) => phrase.tags))).sort();

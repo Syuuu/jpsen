@@ -1,40 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTtsVoice } from "@/hooks/useTtsVoice";
+import { isPreferFemaleVoice, pickJapaneseVoice, waitForVoices } from "@/lib/tts";
 
 const rates = [0.75, 0.9, 1.0, 1.1, 1.25];
-const femaleVoiceRegex = /female|woman|girl|女|女性|ガール/i;
 
-function pickJapaneseVoice(voices: SpeechSynthesisVoice[], preferFemale: boolean) {
-  const japaneseVoices = voices.filter((voice) => voice.lang.startsWith("ja"));
-  if (preferFemale) {
-    const femaleVoice = japaneseVoices.find((voice) => femaleVoiceRegex.test(voice.name));
-    if (femaleVoice) return femaleVoice;
-  }
-  return japaneseVoices[0] ?? null;
-}
-
-function waitForVoices(synth: SpeechSynthesis) {
-  return new Promise<SpeechSynthesisVoice[]>((resolve) => {
-    const voices = synth.getVoices();
-    if (voices.length > 0) {
-      resolve(voices);
-      return;
-    }
-    const handle = () => {
-      resolve(synth.getVoices());
-      synth.onvoiceschanged = null;
-    };
-    synth.onvoiceschanged = handle;
-  });
-}
-
-export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?: string }) {
+export function AudioPlayer({ text, voice }: { text: string; voice?: string }) {
   const [rate, setRate] = useState(1.0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { voice: storedVoice } = useTtsVoice();
+  const resolvedVoice = voice ?? storedVoice;
 
   useEffect(() => {
     return () => {
@@ -53,7 +32,7 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(voice)}`
+        `/api/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(resolvedVoice)}`
       );
       if (!res.ok || res.status === 204) return null;
       const contentType = res.headers.get("content-type") ?? "";
@@ -77,7 +56,7 @@ export function AudioPlayer({ text, voice = "female1" }: { text: string; voice?:
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "ja-JP";
       utterance.rate = rate;
-      const preferred = voice.startsWith("female");
+      const preferred = isPreferFemaleVoice(resolvedVoice);
       const selectedVoice = pickJapaneseVoice(voices, preferred);
       if (selectedVoice) utterance.voice = selectedVoice;
       synth.cancel();
