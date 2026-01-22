@@ -4,26 +4,13 @@ import Link from "next/link";
 import { phrases } from "@/data/phrases";
 import { PhraseCard } from "@/components/PhraseCard";
 import { ProgressMeter } from "@/components/ProgressMeter";
-import { TtsSettingsPanel } from "@/components/TtsSettingsPanel";
-import { useOpenedPhrases } from "@/hooks/useOpenedPhrases";
 import { useSrs } from "@/hooks/useSrs";
 import { dailyReviewLimit } from "@/lib/srs";
 
 export default function HomePage() {
   const { dueToday } = useSrs();
-  const { opened } = useOpenedPhrases();
   const goal = dailyReviewLimit;
   const completed = Math.max(0, goal - dueToday.length);
-  const openedSet = new Set(opened);
-  const ordered = phrases
-    .map((phrase, idx) => ({ phrase, idx }))
-    .sort((a, b) => {
-      const aOpened = openedSet.has(a.phrase.id);
-      const bOpened = openedSet.has(b.phrase.id);
-      if (aOpened === bOpened) return a.idx - b.idx;
-      return aOpened ? 1 : -1;
-    })
-    .map((item) => item.phrase);
 
   return (
     <div className="space-y-8">
@@ -46,8 +33,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <TtsSettingsPanel />
-
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">继续练习</h2>
@@ -56,7 +41,7 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          {ordered.slice(0, 4).map((phrase) => (
+          {phrases.slice(0, 4).map((phrase) => (
             <PhraseCard key={phrase.id} phrase={phrase} />
           ))}
         </div>
