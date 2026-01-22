@@ -60,7 +60,7 @@ export default function PhraseDetailPage() {
         )}
         {phrase.dialogue && (
           <div className="rounded-xl border border-slate-200 p-4 text-sm">
-            <p className="font-semibold text-slate-600">💬 对话</p>
+            <p className="font-semibold text-slate-600">🗨️ 对话</p>
             <p className="mt-2">A：{phrase.dialogue.a}</p>
             <p className="text-slate-500">A：{phrase.dialogue.cn.a}</p>
             <p>B：{phrase.dialogue.b}</p>
@@ -69,8 +69,8 @@ export default function PhraseDetailPage() {
         )}
         <AudioPlayer text={phrase.jp} />
         <div className="flex items-center justify-between">
-          <Link href="/library" className="btn">
-            返回会话库
+          <Link href="/" className="btn">
+            返回主页
           </Link>
           {nextPhrase ? (
             <Link href={`/phrase/${nextPhrase.id}`} className="btn btn-primary">

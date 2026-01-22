@@ -26,8 +26,11 @@ type DialogueLine = {
 export default function ShadowingPage() {
   const { opened } = useOpenedPhrases();
   const playlist = useMemo(() => {
-    const learned = phrases.filter((phrase) => opened.includes(phrase.id));
-    return learned;
+    const phraseMap = new Map(phrases.map((phrase) => [phrase.id, phrase]));
+    const recentIds = opened.slice(-20).reverse();
+    return recentIds
+      .map((id) => phraseMap.get(id))
+      .filter((phrase): phrase is (typeof phrases)[number] => Boolean(phrase));
   }, [opened]);
   const { voice } = useTtsVoice();
   const [index, setIndex] = useState(0);
@@ -198,7 +201,7 @@ export default function ShadowingPage() {
   return (
     <div className="space-y-6">
       <div className="card space-y-3">
-        <h1 className="text-2xl font-semibold">跟读练习</h1>
+        <h1 className="text-2xl font-semibold">🎧 跟读练习</h1>
         <p className="text-slate-600">
           自动播放整段会话，按对话顺序模仿语音节奏。
         </p>

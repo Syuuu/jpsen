@@ -65,7 +65,7 @@ export default function ReviewPage() {
   return (
     <div className="space-y-6">
       <div className="card space-y-4">
-        <h1 className="text-2xl font-semibold">今日复习</h1>
+        <h1 className="text-2xl font-semibold">🧩 今日复习</h1>
         <p className="text-slate-600">
           今日到期：{dueToday.length} 句。优先复习熟练度较低的内容。
         </p>

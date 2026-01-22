@@ -20,14 +20,35 @@ const shuffle = <T,>(list: T[]) => {
 };
 
 export default function HomePage() {
-  const { dueToday } = useSrs();
+  const { dueToday, srsMap } = useSrs();
   const { opened } = useOpenedPhrases();
   const goal = dailyReviewLimit;
   const completed = Math.max(0, goal - dueToday.length);
   const [showReviewNudge, setShowReviewNudge] = useState(false);
   const continueList = useMemo(() => {
-    return shuffle(phrases);
-  }, [opened]);
+    const openedSet = new Set(opened);
+    const unlearned = phrases.filter((phrase) => !openedSet.has(phrase.id));
+    if (unlearned.length > 0) {
+      return shuffle(unlearned);
+    }
+    return [...phrases].sort((a, b) => {
+      const aEntry = srsMap[a.id];
+      const bEntry = srsMap[b.id];
+      const easeDiff = (aEntry?.ease ?? 1) - (bEntry?.ease ?? 1);
+      if (easeDiff !== 0) return easeDiff;
+      return (aEntry?.lastReviewedAt ?? 0) - (bEntry?.lastReviewedAt ?? 0);
+    });
+  }, [opened, srsMap]);
+
+  useEffect(() => {
+    if (opened.length === 0 || opened.length % 20 !== 0) return;
+    const lastNotified = readStorage<number>(storageKeys.reviewNudge, 0);
+    if (opened.length <= lastNotified) return;
+    setShowReviewNudge(true);
+    writeStorage(storageKeys.reviewNudge, opened.length);
+    const timer = window.setTimeout(() => setShowReviewNudge(false), 5000);
+    return () => window.clearTimeout(timer);
+  }, [opened.length]);
 
   useEffect(() => {
     if (opened.length === 0 || opened.length % 20 !== 0) return;
@@ -42,7 +63,7 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       <section className="card space-y-4">
-        <h1 className="text-2xl font-semibold">今天想练哪一段？</h1>
+        <h1 className="text-2xl font-semibold">🌟 今天想练哪一段？</h1>
         <p className="text-slate-600">
           以整句话为核心，用短对话和真实场景建立记忆。
         </p>
@@ -67,7 +88,7 @@ export default function HomePage() {
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">继续练习</h2>
+          <h2 className="text-xl font-semibold">📌 继续练习</h2>
           <Link href="/library" className="text-sm text-accent">
             查看全部
           </Link>
