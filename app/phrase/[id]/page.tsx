@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { phrases } from "@/data/phrases";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { TagChips } from "@/components/TagChips";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useOpenedPhrases } from "@/hooks/useOpenedPhrases";
 
 export default function PhraseDetailPage() {
   const params = useParams<{ id: string }>();
@@ -13,6 +15,13 @@ export default function PhraseDetailPage() {
   const phrase = phraseIndex >= 0 ? phrases[phraseIndex] : null;
   const nextPhrase = phraseIndex >= 0 ? phrases[phraseIndex + 1] : null;
   const { favorites, toggleFavorite } = useFavorites();
+  const { markOpened } = useOpenedPhrases();
+
+  useEffect(() => {
+    if (phrase) {
+      markOpened(phrase.id);
+    }
+  }, [phrase, markOpened]);
 
   if (!phrase) {
     return (

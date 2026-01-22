@@ -1,19 +1,8 @@
 import { NextRequest } from "next/server";
 import { createHash } from "crypto";
+import { isTtsVoice, normalizeTtsVoice, openAiVoices } from "@/lib/tts";
 
 const audioCache = new Map<string, ArrayBuffer>();
-const openAiVoices = new Set([
-  "alloy",
-  "ash",
-  "coral",
-  "echo",
-  "fable",
-  "onyx",
-  "nova",
-  "sage",
-  "shimmer"
-]);
-
 function createCacheKey(text: string, voice: string | null, provider: string | undefined) {
   const hash = createHash("sha256")
     .update(JSON.stringify({ text, voice, provider }))
@@ -80,11 +69,10 @@ export async function GET(request: NextRequest) {
     }
     const model = process.env.OPENAI_TTS_MODEL ?? "gpt-4o-mini-tts";
     const format = process.env.OPENAI_TTS_FORMAT ?? "mp3";
-    const candidateVoice = voiceParam && !isUiVoiceLabel(voiceParam) ? voiceParam : null;
-    const voice =
-      (candidateVoice && openAiVoices.has(candidateVoice) ? candidateVoice : null) ??
-      process.env.TTS_VOICE ??
-      "alloy";
+    const candidateVoice =
+      voiceParam && !isUiVoiceLabel(voiceParam) && isTtsVoice(voiceParam) ? voiceParam : null;
+    const envVoice = normalizeTtsVoice(process.env.TTS_VOICE ?? undefined);
+    const voice = candidateVoice && openAiVoices.has(candidateVoice) ? candidateVoice : envVoice;
     const cacheKey = createCacheKey(text, voice, provider);
     const cached = audioCache.get(cacheKey);
     if (cached) {
