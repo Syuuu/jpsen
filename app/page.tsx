@@ -40,7 +40,7 @@ export default function HomePage() {
             开始跟读
           </Link>
           <Link href="/library" className="btn">
-            搜索句子库
+            搜索会话库
           </Link>
         </div>
       </section>

@@ -24,7 +24,7 @@ export default function FavoritesPage() {
         <div className="card space-y-3">
           <p className="text-slate-600">还没有收藏的句子。</p>
           <Link href="/library" className="btn btn-primary">
-            去句子库看看
+            去会话库看看
           </Link>
         </div>
       ) : (

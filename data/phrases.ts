@@ -14,7 +14,7 @@ export type Phrase = {
   notes?: string;
 };
 
-export const phrases: Phrase[] = [
+const basePhrases: Phrase[] = [
   {
     id: "p001",
     jp: "今日ちょっと早めに上がってもいい？",
@@ -620,5 +620,22 @@ export const phrases: Phrase[] = [
     }
   }
 ];
+
+const dialogueFallbacks: Record<PhraseTone, string> = {
+  casual: "うん、いいよ。",
+  polite: "はい、わかりました。",
+  soft: "うん、大丈夫だよ。"
+};
+
+export const phrases: Phrase[] = basePhrases.map((phrase) => {
+  if (phrase.dialogue) return phrase;
+  return {
+    ...phrase,
+    dialogue: {
+      a: phrase.jp,
+      b: dialogueFallbacks[phrase.tone]
+    }
+  };
+});
 
 export const allTags = Array.from(new Set(phrases.flatMap((phrase) => phrase.tags))).sort();

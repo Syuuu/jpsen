@@ -5,10 +5,10 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { phrases } from "@/data/phrases";
 import { AudioPlayer } from "@/components/AudioPlayer";
+import { DialogueAudioPlayer } from "@/components/DialogueAudioPlayer";
 import { TagChips } from "@/components/TagChips";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useOpenedPhrases } from "@/hooks/useOpenedPhrases";
-import { useTtsVoice } from "@/hooks/useTtsVoice";
 
 export default function PhraseDetailPage() {
   const params = useParams<{ id: string }>();
@@ -17,7 +17,6 @@ export default function PhraseDetailPage() {
   const nextPhrase = phraseIndex >= 0 ? phrases[phraseIndex + 1] : null;
   const { favorites, toggleFavorite } = useFavorites();
   const { markOpened } = useOpenedPhrases();
-  const { voice } = useTtsVoice();
 
   useEffect(() => {
     if (phrase) {
@@ -30,7 +29,7 @@ export default function PhraseDetailPage() {
       <div className="space-y-4">
         <p>没有找到这条句子。</p>
         <Link href="/library" className="text-accent">
-          返回句子库
+          返回会话库
         </Link>
       </div>
     );
@@ -67,10 +66,19 @@ export default function PhraseDetailPage() {
             <p>B：{phrase.dialogue.b}</p>
           </div>
         )}
-        <AudioPlayer text={phrase.jp} voice={voice} />
+        {phrase.dialogue ? (
+          <DialogueAudioPlayer
+            lines={[
+              { label: "A", text: phrase.dialogue.a },
+              { label: "B", text: phrase.dialogue.b }
+            ]}
+          />
+        ) : (
+          <AudioPlayer text={phrase.jp} />
+        )}
         <div className="flex items-center justify-between">
           <Link href="/library" className="btn">
-            返回句子库
+            返回会话库
           </Link>
           {nextPhrase ? (
             <Link href={`/phrase/${nextPhrase.id}`} className="btn btn-primary">
