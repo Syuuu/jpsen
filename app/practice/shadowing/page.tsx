@@ -337,6 +337,7 @@ export default function ShadowingPage() {
           </button>
         </div>
       </div>
+      <div className="text-center text-xs text-slate-400">版本 1.0.1</div>
     </div>
   );
 }
