@@ -205,9 +205,7 @@ export default function ShadowingPage() {
 
   useEffect(() => {
     if (!current) return;
-    stop();
-    playSequence();
-    return () => {
+    if (current.dialogue) {
       stop();
     };
   }, [index, current?.id]);
@@ -265,8 +263,9 @@ export default function ShadowingPage() {
           <button className="btn btn-primary" onClick={playSequence}>
             {loading ? "播放中..." : playLabel}
           </button>
-          <button className="btn" onClick={stop}>
-            停止
+          <button className="btn flex items-center gap-2" onClick={stop}>
+            <span aria-hidden>⏹️</span>
+            <span>停止</span>
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2">

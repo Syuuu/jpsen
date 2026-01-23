@@ -1623,7 +1623,7 @@ const basePhrases: Phrase[] = [
         b: "最好带伞。"
       }
       }
-    }
+    
   },
   {
     id: "p101",
