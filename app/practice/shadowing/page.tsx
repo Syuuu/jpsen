@@ -135,6 +135,7 @@ export default function ShadowingPage() {
 
   const playSequence = async () => {
     if (!current) return;
+    stop();
     setLoading(true);
     const playId = ++playIdRef.current;
     try {
@@ -188,15 +189,6 @@ export default function ShadowingPage() {
     );
   }
 
-  if (playlist.length === 0) {
-    return (
-      <div className="card text-center">
-        <p className="text-lg font-semibold">还没有学习记录</p>
-        <p className="text-slate-600">跟读仅展示学习过的内容。</p>
-      </div>
-    );
-  }
-
   if (!current) {
     return (
       <div className="card text-center space-y-3">
@@ -209,7 +201,7 @@ export default function ShadowingPage() {
     );
   }
 
-  const playLabel = current?.dialogue ? "播放会话" : "播放句子";
+  const playLabel = "播放会话";
 
   return (
     <div className="space-y-6">
@@ -238,9 +230,8 @@ export default function ShadowingPage() {
         <p className="text-sm text-slate-600">{current.cn}</p>
         <TagChips tags={current.tags} tone={current.tone} />
         <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-          <button className="btn btn-primary flex items-center gap-2" onClick={playSequence}>
-            <span aria-hidden>🎬</span>
-            <span>{loading ? "播放中..." : playLabel}</span>
+          <button className="btn btn-primary" onClick={playSequence}>
+            {loading ? "播放中..." : playLabel}
           </button>
           <button className="btn flex items-center gap-2" onClick={stop}>
             <span aria-hidden>⏹️</span>

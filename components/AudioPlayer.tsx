@@ -66,6 +66,7 @@ export function AudioPlayer({ text, voice }: { text: string; voice?: string }) {
   };
 
   const handlePlay = async () => {
+    handleStop();
     const url = await fetchTts();
     if (url) {
       const audio = new Audio(url);

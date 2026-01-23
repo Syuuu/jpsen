@@ -5,13 +5,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const links = [
-  { href: "/library", label: "会话库" },
-  { href: "/guide", label: "使用方式" },
-  { href: "/review", label: "今日复习" },
-  { href: "/practice/shadowing", label: "跟读" },
-  { href: "/practice/cloze", label: "听力" },
-  { href: "/favorites", label: "收藏夹" },
-  { href: "/settings", label: "设置" }
+  { href: "/library", label: "会话库", icon: "📚" },
+  { href: "/guide", label: "使用方式", icon: "🧭" },
+  { href: "/review", label: "今日复习", icon: "🧩" },
+  { href: "/practice/shadowing", label: "跟读", icon: "🎧" },
+  { href: "/practice/cloze", label: "听力", icon: "🎯" },
+  { href: "/favorites", label: "收藏夹", icon: "⭐" },
+  { href: "/settings", label: "设置", icon: "⚙️" }
 ];
 
 export function HeaderNav() {
@@ -25,12 +25,13 @@ export function HeaderNav() {
   return (
     <div className="relative">
       <button
-        className="btn btn-ghost"
+        className="btn btn-ghost h-10 w-10 p-0 text-lg"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         aria-haspopup="menu"
+        aria-label="菜单"
       >
-        菜单
+        ☰
       </button>
       {open && (
         <div
@@ -42,10 +43,11 @@ export function HeaderNav() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-accent"
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-accent"
                 role="menuitem"
               >
-                {link.label}
+                <span aria-hidden>{link.icon}</span>
+                <span>{link.label}</span>
               </Link>
             ))}
           </div>

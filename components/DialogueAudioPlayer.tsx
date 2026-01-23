@@ -97,6 +97,7 @@ export function DialogueAudioPlayer({ lines }: { lines: DialogueLine[] }) {
 
   const playSequence = async () => {
     if (resolvedLines.length === 0) return;
+    stop();
     setLoading(true);
     setSource("idle");
     const playId = ++playIdRef.current;
