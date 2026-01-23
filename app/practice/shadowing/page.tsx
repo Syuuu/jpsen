@@ -143,12 +143,38 @@ export default function ShadowingPage() {
 
   const playSequence = async () => {
     if (!current) return;
+    const secondaryVoice = pickAlternateVoice(voice);
+    const playbackLines: DialogueLine[] = current.dialogue
+      ? [
+          {
+            label: "A",
+            text: current.dialogue.a,
+            cnText: current.dialogue.cn.a,
+            voice: voice,
+            preferFemale: isPreferFemaleVoice(voice)
+          },
+          {
+            label: "B",
+            text: current.dialogue.b,
+            cnText: current.dialogue.cn.b,
+            voice: secondaryVoice,
+            preferFemale: isPreferFemaleVoice(secondaryVoice)
+          }
+        ]
+      : [
+          {
+            label: "句子",
+            text: current.jp,
+            voice: voice,
+            preferFemale: isPreferFemaleVoice(voice)
+          }
+        ];
     stop();
     setLoading(true);
     const playId = ++playIdRef.current;
     try {
       do {
-        for (const line of dialogueLines) {
+        for (const line of playbackLines) {
           if (playIdRef.current !== playId) return;
           const blob = await fetchTts(line.text, line.voice);
           if (blob) {
