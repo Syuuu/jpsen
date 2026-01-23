@@ -130,13 +130,15 @@ export function DialogueAudioPlayer({ lines }: { lines: DialogueLine[] }) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <button className="btn btn-primary" onClick={playSequence}>
-          {loading ? "播放中..." : "播放会话"}
+        <button className="btn btn-primary flex items-center gap-2" onClick={playSequence}>
+          <span aria-hidden>🎬</span>
+          <span>{loading ? "播放中..." : "播放会话"}</span>
         </button>
-        <button className="btn" onClick={stop}>
-          停止
+        <button className="btn flex items-center gap-2" onClick={stop}>
+          <span aria-hidden>⏹️</span>
+          <span>停止</span>
         </button>
       </div>
       <div className="flex flex-wrap items-center gap-2">

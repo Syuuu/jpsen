@@ -241,9 +241,10 @@ export default function ListeningPage() {
 
       <div className="card space-y-4">
         <p className="text-sm text-slate-600">{current.prompt}</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <button className="btn btn-primary" onClick={playAudio}>
-            {loading ? "播放中..." : "重播"}
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <button className="btn btn-primary flex items-center gap-2" onClick={playAudio}>
+            <span aria-hidden>🔊</span>
+            <span>{loading ? "播放中..." : "播放"}</span>
           </button>
           <span className="text-xs text-slate-500">
             播放来源：

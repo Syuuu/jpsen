@@ -6,7 +6,8 @@ import { HeaderNav } from "@/components/HeaderNav";
 export const metadata: Metadata = {
   title: "JP Phrases Trainer",
   description: "Daily Japanese phrase trainer with SRS and shadowing.",
-  manifest: "/manifest.webmanifest"
+  manifest: "/manifest.webmanifest",
+  themeColor: "#ffffff"
 };
 
 export default function RootLayout({
@@ -14,6 +15,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ja">
+      <head>
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+      </head>
       <body>
         <header className="border-b border-slate-200 bg-white">
           <div className="container flex h-16 items-center justify-between">

@@ -94,13 +94,15 @@ export function AudioPlayer({ text, voice }: { text: string; voice?: string }) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <button className="btn btn-primary" onClick={handlePlay}>
-          {loading ? "加载中..." : "播放"}
+        <button className="btn btn-primary flex items-center gap-2" onClick={handlePlay}>
+          <span aria-hidden>▶️</span>
+          <span>{loading ? "加载中..." : "播放"}</span>
         </button>
-        <button className="btn" onClick={handleStop}>
-          停止
+        <button className="btn flex items-center gap-2" onClick={handleStop}>
+          <span aria-hidden>⏹️</span>
+          <span>停止</span>
         </button>
       </div>
       <div className="flex flex-wrap items-center gap-2">

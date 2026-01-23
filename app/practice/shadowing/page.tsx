@@ -170,12 +170,23 @@ export default function ShadowingPage() {
 
   useEffect(() => {
     if (!current) return;
-    stop();
-    playSequence();
-    return () => {
+    if (current.dialogue) {
       stop();
-    };
-  }, [index]);
+      playSequence();
+      return () => {
+        stop();
+      };
+    }
+  }, [index, current?.dialogue]);
+
+  if (playlist.length === 0) {
+    return (
+      <div className="card text-center">
+        <p className="text-lg font-semibold">还没有学习记录</p>
+        <p className="text-slate-600">跟读仅展示学习过的内容。</p>
+      </div>
+    );
+  }
 
   if (playlist.length === 0) {
     return (
@@ -197,6 +208,8 @@ export default function ShadowingPage() {
       </div>
     );
   }
+
+  const playLabel = current?.dialogue ? "播放会话" : "播放句子";
 
   return (
     <div className="space-y-6">
@@ -224,12 +237,14 @@ export default function ShadowingPage() {
         </div>
         <p className="text-sm text-slate-600">{current.cn}</p>
         <TagChips tags={current.tags} tone={current.tone} />
-        <div className="flex flex-wrap gap-2">
-          <button className="btn btn-primary" onClick={playSequence}>
-            {loading ? "播放中..." : "重新播放"}
+        <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <button className="btn btn-primary flex items-center gap-2" onClick={playSequence}>
+            <span aria-hidden>🎬</span>
+            <span>{loading ? "播放中..." : playLabel}</span>
           </button>
-          <button className="btn" onClick={stop}>
-            停止
+          <button className="btn flex items-center gap-2" onClick={stop}>
+            <span aria-hidden>⏹️</span>
+            <span>停止</span>
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
