@@ -173,12 +173,8 @@ export default function ShadowingPage() {
     if (!current) return;
     if (current.dialogue) {
       stop();
-      playSequence();
-      return () => {
-        stop();
-      };
-    }
-  }, [index, current?.dialogue]);
+    };
+  }, [index, current?.id]);
 
   if (playlist.length === 0) {
     return (
