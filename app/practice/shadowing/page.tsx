@@ -45,9 +45,13 @@ export default function ShadowingPage() {
   const [rate, setRate] = useState(1.1);
   const [loop, setLoop] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playIdRef = useRef(0);
+  const pendingAutoplayRef = useRef(false);
+  const userActivatedRef = useRef(false);
+  const startPlaybackRef = useRef<() => void>(() => {});
 
   const current = playlist[index];
 
@@ -117,68 +121,58 @@ export default function ShadowingPage() {
   };
 
   const playAudio = (blob: Blob, playId: number) => {
-    return new Promise<void>((resolve) => {
+    return new Promise<boolean>((resolve) => {
+      let settled = false;
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audio.playbackRate = rate;
       audioRef.current = audio;
-      audio.onended = () => {
+      const finalize = (played: boolean) => {
+        if (settled) return;
+        settled = true;
         URL.revokeObjectURL(url);
-        resolve();
+        resolve(played);
+      };
+      audio.onended = () => {
+        finalize(true);
       };
       audio.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve();
+        finalize(false);
       };
       audio
         .play()
         .then(() => {
           if (playIdRef.current !== playId) {
             audio.pause();
+            finalize(false);
           }
         })
-        .catch(() => resolve());
+        .catch((error) => {
+          if (error instanceof Error && error.name === "NotAllowedError") {
+            setAutoplayBlocked(true);
+            pendingAutoplayRef.current = true;
+          }
+          finalize(false);
+        });
     });
   };
 
   const playSequence = async () => {
     if (!current) return;
-    const secondaryVoice = pickAlternateVoice(voice);
-    const playbackLines: DialogueLine[] = current.dialogue
-      ? [
-          {
-            label: "A",
-            text: current.dialogue.a,
-            cnText: current.dialogue.cn.a,
-            voice: voice,
-            preferFemale: isPreferFemaleVoice(voice)
-          },
-          {
-            label: "B",
-            text: current.dialogue.b,
-            cnText: current.dialogue.cn.b,
-            voice: secondaryVoice,
-            preferFemale: isPreferFemaleVoice(secondaryVoice)
-          }
-        ]
-      : [
-          {
-            label: "句子",
-            text: current.jp,
-            voice: voice,
-            preferFemale: isPreferFemaleVoice(voice)
-          }
-        ];
+    if (dialogueLines.length === 0) return;
     setLoading(true);
+    setAutoplayBlocked(false);
+    setSource("idle");
     const playId = ++playIdRef.current;
     try {
       do {
-        for (const line of playbackLines) {
+        for (const line of dialogueLines) {
           if (playIdRef.current !== playId) return;
           const blob = await fetchTts(line.text, line.voice);
           if (blob) {
             setSource("server");
-            await playAudio(blob, playId);
+            const played = await playAudio(blob, playId);
+            if (!played) return;
           } else {
             await playWebSpeech(line, playId);
           }
@@ -193,6 +187,7 @@ export default function ShadowingPage() {
 
   const startPlayback = () => {
     if (!current) return;
+    pendingAutoplayRef.current = false;
     stop();
     void playSequence();
   };
@@ -210,8 +205,36 @@ export default function ShadowingPage() {
 
   useEffect(() => {
     if (!current) return;
-    startPlayback();
+    const hasActivation =
+      typeof navigator !== "undefined" &&
+      "userActivation" in navigator &&
+      Boolean(navigator.userActivation?.hasBeenActive);
+    if (hasActivation || userActivatedRef.current) {
+      startPlayback();
+      return;
+    }
+    pendingAutoplayRef.current = true;
   }, [current?.id]);
+
+  useEffect(() => {
+    startPlaybackRef.current = startPlayback;
+  }, [startPlayback]);
+
+  useEffect(() => {
+    const handleUserActivation = () => {
+      userActivatedRef.current = true;
+      if (pendingAutoplayRef.current) {
+        pendingAutoplayRef.current = false;
+        startPlaybackRef.current();
+      }
+    };
+    window.addEventListener("pointerdown", handleUserActivation, { once: true });
+    window.addEventListener("keydown", handleUserActivation, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", handleUserActivation);
+      window.removeEventListener("keydown", handleUserActivation);
+    };
+  }, []);
 
   if (playlist.length === 0) {
     return (
@@ -271,6 +294,11 @@ export default function ShadowingPage() {
             <span>停止</span>
           </button>
         </div>
+        {autoplayBlocked && (
+          <p className="text-xs text-amber-600">
+            自动播放需要一次用户操作，请点击页面任意位置以开始播放。
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-slate-500">语速</span>
           {rates.map((item) => (
@@ -313,6 +341,7 @@ export default function ShadowingPage() {
           </button>
         </div>
       </div>
+      <div className="text-center text-xs text-slate-400">版本 1.0.1</div>
     </div>
   );
 }
