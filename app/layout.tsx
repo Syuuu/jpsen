@@ -1,5 +1,5 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { HeaderNav } from "@/components/HeaderNav";
 
@@ -19,6 +19,10 @@ export const viewport = {
 };
 
 export const viewport = {
+  themeColor: "#ffffff"
+};
+
+export const viewport: Viewport = {
   themeColor: "#ffffff"
 };
 
