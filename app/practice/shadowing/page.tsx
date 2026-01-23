@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { phrases } from "@/data/phrases";
 import { TagChips } from "@/components/TagChips";
 import { useTtsVoice } from "@/hooks/useTtsVoice";
+import { useOpenedPhrases } from "@/hooks/useOpenedPhrases";
 import {
   isPreferFemaleVoice,
   pickAlternateVoice,
@@ -11,20 +13,28 @@ import {
   waitForVoices
 } from "@/lib/tts";
 
-const rates = [0.75, 0.9, 1.0, 1.1, 1.25];
+const rates = [0.9, 1.0, 1.1, 1.25, 1.4];
 
 type DialogueLine = {
   label: string;
   text: string;
+  cnText?: string;
   voice: string;
   preferFemale: boolean;
 };
 
 export default function ShadowingPage() {
-  const playlist = useMemo(() => phrases.slice(0, 12), []);
+  const { opened } = useOpenedPhrases();
+  const playlist = useMemo(() => {
+    const phraseMap = new Map(phrases.map((phrase) => [phrase.id, phrase]));
+    const recentIds = opened.slice(-20).reverse();
+    return recentIds
+      .map((id) => phraseMap.get(id))
+      .filter((phrase): phrase is (typeof phrases)[number] => Boolean(phrase));
+  }, [opened]);
   const { voice } = useTtsVoice();
   const [index, setIndex] = useState(0);
-  const [rate, setRate] = useState(1.0);
+  const [rate, setRate] = useState(1.1);
   const [loop, setLoop] = useState(false);
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
@@ -32,6 +42,10 @@ export default function ShadowingPage() {
   const playIdRef = useRef(0);
 
   const current = playlist[index];
+
+  useEffect(() => {
+    setIndex(0);
+  }, [playlist.length]);
 
   const dialogueLines = useMemo<DialogueLine[]>(() => {
     if (!current) return [];
@@ -42,12 +56,14 @@ export default function ShadowingPage() {
         {
           label: "A",
           text: current.dialogue.a,
+          cnText: current.dialogue.cn.a,
           voice: primaryVoice,
           preferFemale: isPreferFemaleVoice(primaryVoice)
         },
         {
           label: "B",
           text: current.dialogue.b,
+          cnText: current.dialogue.cn.b,
           voice: secondaryVoice,
           preferFemale: isPreferFemaleVoice(secondaryVoice)
         }
@@ -119,6 +135,7 @@ export default function ShadowingPage() {
 
   const playSequence = async () => {
     if (!current) return;
+    stop();
     setLoading(true);
     const playId = ++playIdRef.current;
     try {
@@ -154,40 +171,67 @@ export default function ShadowingPage() {
 
   useEffect(() => {
     if (!current) return;
-    stop();
-    playSequence();
-    return () => {
+    if (current.dialogue) {
       stop();
-    };
-  }, [index]);
+      playSequence();
+      return () => {
+        stop();
+      };
+    }
+  }, [index, current?.dialogue]);
+
+  if (playlist.length === 0) {
+    return (
+      <div className="card text-center">
+        <p className="text-lg font-semibold">还没有学习记录</p>
+        <p className="text-slate-600">跟读仅展示学习过的内容。</p>
+      </div>
+    );
+  }
 
   if (!current) {
-    return null;
+    return (
+      <div className="card text-center space-y-3">
+        <p className="text-lg font-semibold">跟读完成！</p>
+        <p className="text-slate-600">已完成本次学习内容的跟读。</p>
+        <Link href="/practice/cloze" className="btn btn-primary">
+          进入听力测试
+        </Link>
+      </div>
+    );
   }
+
+  const playLabel = "播放会话";
 
   return (
     <div className="space-y-6">
       <div className="card space-y-3">
-        <h1 className="text-2xl font-semibold">跟读练习</h1>
+        <h1 className="text-2xl font-semibold">🎧 跟读练习</h1>
         <p className="text-slate-600">
           自动播放整段会话，按对话顺序模仿语音节奏。
         </p>
       </div>
 
       <div className="card space-y-4">
+        <p className="text-sm text-slate-500">仅展示你学习过的内容。</p>
         <div className="space-y-2">
           {dialogueLines.map((line) => (
             <div key={line.label} className="text-sm text-slate-600">
               <span className="mr-2 font-semibold text-slate-700">{line.label}：</span>
               <span className="text-base text-slate-900">{line.text}</span>
+              {line.cnText && (
+                <span className="block text-sm text-slate-500">
+                  {line.label}：{line.cnText}
+                </span>
+              )}
             </div>
           ))}
         </div>
         <p className="text-sm text-slate-600">{current.cn}</p>
         <TagChips tags={current.tags} tone={current.tone} />
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
           <button className="btn btn-primary" onClick={playSequence}>
-            {loading ? "播放中..." : "重新播放"}
+            {loading ? "播放中..." : playLabel}
           </button>
           <button className="btn" onClick={stop}>
             停止
