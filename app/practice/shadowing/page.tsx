@@ -52,6 +52,7 @@ export default function ShadowingPage() {
   const pendingAutoplayRef = useRef(false);
   const userActivatedRef = useRef(false);
   const startPlaybackRef = useRef<() => void>(() => {});
+  const forceWebSpeechRef = useRef(false);
 
   const current = playlist[index];
 
@@ -149,8 +150,10 @@ export default function ShadowingPage() {
         })
         .catch((error) => {
           if (error instanceof Error && error.name === "NotAllowedError") {
-            setAutoplayBlocked(true);
-            pendingAutoplayRef.current = true;
+            if (!userActivatedRef.current) {
+              setAutoplayBlocked(true);
+              pendingAutoplayRef.current = true;
+            }
             finalize(false, true);
             return;
           }
@@ -165,20 +168,29 @@ export default function ShadowingPage() {
     setLoading(true);
     setAutoplayBlocked(false);
     setSource("idle");
+    forceWebSpeechRef.current = false;
     const playId = ++playIdRef.current;
     try {
       do {
         for (const line of dialogueLines) {
           if (playIdRef.current !== playId) return;
-          const blob = await fetchTts(line.text, line.voice);
-          if (blob) {
-            setSource("server");
-            const { played, blocked } = await playAudio(blob, playId);
-            if (!played) {
-              if (blocked) return;
-              await playWebSpeech(line, playId);
+          if (!forceWebSpeechRef.current) {
+            const blob = await fetchTts(line.text, line.voice);
+            if (blob) {
+              setSource("server");
+              const { played, blocked } = await playAudio(blob, playId);
+              if (played) {
+                continue;
+              }
+              if (blocked) {
+                if (!userActivatedRef.current) return;
+                forceWebSpeechRef.current = true;
+              }
+            } else {
+              forceWebSpeechRef.current = true;
             }
-          } else {
+          }
+          if (forceWebSpeechRef.current) {
             await playWebSpeech(line, playId);
           }
         }
@@ -192,6 +204,7 @@ export default function ShadowingPage() {
 
   const startPlayback = () => {
     if (!current) return;
+    userActivatedRef.current = true;
     pendingAutoplayRef.current = false;
     stop();
     void playSequence();
@@ -331,7 +344,10 @@ export default function ShadowingPage() {
         <div className="flex items-center justify-between">
           <button
             className="btn"
-            onClick={() => setIndex((prev) => Math.max(0, prev - 1))}
+            onClick={() => {
+              stop();
+              setIndex((prev) => Math.max(0, prev - 1));
+            }}
           >
             上一句
           </button>
@@ -340,7 +356,10 @@ export default function ShadowingPage() {
           </span>
           <button
             className="btn"
-            onClick={() => setIndex((prev) => Math.min(playlist.length - 1, prev + 1))}
+            onClick={() => {
+              stop();
+              setIndex((prev) => Math.min(playlist.length - 1, prev + 1));
+            }}
           >
             下一句
           </button>
