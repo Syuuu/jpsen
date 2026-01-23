@@ -45,9 +45,12 @@ export default function ShadowingPage() {
   const [rate, setRate] = useState(1.1);
   const [loop, setLoop] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playIdRef = useRef(0);
+  const userActivatedRef = useRef(false);
+  const forceWebSpeechRef = useRef(false);
 
   const current = playlist[index];
 
@@ -117,70 +120,74 @@ export default function ShadowingPage() {
   };
 
   const playAudio = (blob: Blob, playId: number) => {
-    return new Promise<void>((resolve) => {
+    return new Promise<{ played: boolean; blocked: boolean }>((resolve) => {
+      let settled = false;
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audio.playbackRate = rate;
       audioRef.current = audio;
-      audio.onended = () => {
+      const finalize = (played: boolean, blocked = false) => {
+        if (settled) return;
+        settled = true;
         URL.revokeObjectURL(url);
-        resolve();
+        resolve({ played, blocked });
+      };
+      audio.onended = () => {
+        finalize(true);
       };
       audio.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve();
+        finalize(false);
       };
       audio
         .play()
         .then(() => {
           if (playIdRef.current !== playId) {
             audio.pause();
+            finalize(false);
           }
         })
-        .catch(() => resolve());
+        .catch((error) => {
+          if (error instanceof Error && error.name === "NotAllowedError") {
+            if (!userActivatedRef.current) {
+              setAutoplayBlocked(true);
+            }
+            finalize(false, true);
+            return;
+          }
+          finalize(false);
+        });
     });
   };
 
   const playSequence = async () => {
     if (!current) return;
-    const secondaryVoice = pickAlternateVoice(voice);
-    const playbackLines: DialogueLine[] = current.dialogue
-      ? [
-          {
-            label: "A",
-            text: current.dialogue.a,
-            cnText: current.dialogue.cn.a,
-            voice: voice,
-            preferFemale: isPreferFemaleVoice(voice)
-          },
-          {
-            label: "B",
-            text: current.dialogue.b,
-            cnText: current.dialogue.cn.b,
-            voice: secondaryVoice,
-            preferFemale: isPreferFemaleVoice(secondaryVoice)
-          }
-        ]
-      : [
-          {
-            label: "句子",
-            text: current.jp,
-            voice: voice,
-            preferFemale: isPreferFemaleVoice(voice)
-          }
-        ];
-    stop();
+    if (dialogueLines.length === 0) return;
     setLoading(true);
+    setAutoplayBlocked(false);
+    setSource("idle");
+    forceWebSpeechRef.current = false;
     const playId = ++playIdRef.current;
     try {
       do {
-        for (const line of playbackLines) {
+        for (const line of dialogueLines) {
           if (playIdRef.current !== playId) return;
-          const blob = await fetchTts(line.text, line.voice);
-          if (blob) {
-            setSource("server");
-            await playAudio(blob, playId);
-          } else {
+          if (!forceWebSpeechRef.current) {
+            const blob = await fetchTts(line.text, line.voice);
+            if (blob) {
+              setSource("server");
+              const { played, blocked } = await playAudio(blob, playId);
+              if (played) {
+                continue;
+              }
+              if (blocked) {
+                if (!userActivatedRef.current) return;
+                forceWebSpeechRef.current = true;
+              }
+            } else {
+              forceWebSpeechRef.current = true;
+            }
+          }
+          if (forceWebSpeechRef.current) {
             await playWebSpeech(line, playId);
           }
         }
@@ -190,6 +197,13 @@ export default function ShadowingPage() {
         setLoading(false);
       }
     }
+  };
+
+  const startPlayback = () => {
+    if (!current) return;
+    userActivatedRef.current = true;
+    stop();
+    void playSequence();
   };
 
   const stop = () => {
@@ -205,10 +219,10 @@ export default function ShadowingPage() {
 
   useEffect(() => {
     if (!current) return;
-    if (current.dialogue) {
-      stop();
-    };
-  }, [index, current?.id]);
+    if (userActivatedRef.current) {
+      startPlayback();
+    }
+  }, [current?.id]);
 
   if (playlist.length === 0) {
     return (
@@ -260,7 +274,7 @@ export default function ShadowingPage() {
         <p className="text-sm text-slate-600">{current.cn}</p>
         <TagChips tags={current.tags} tone={current.tone} />
         <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-          <button className="btn btn-primary" onClick={playSequence}>
+          <button className="btn btn-primary" onClick={startPlayback}>
             {loading ? "播放中..." : playLabel}
           </button>
           <button className="btn flex items-center gap-2" onClick={stop}>
@@ -268,6 +282,11 @@ export default function ShadowingPage() {
             <span>停止</span>
           </button>
         </div>
+        {autoplayBlocked && (
+          <p className="text-xs text-amber-600">
+            自动播放需要一次用户操作，请点击页面任意位置以开始播放。
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-slate-500">语速</span>
           {rates.map((item) => (
@@ -295,7 +314,11 @@ export default function ShadowingPage() {
         <div className="flex items-center justify-between">
           <button
             className="btn"
-            onClick={() => setIndex((prev) => Math.max(0, prev - 1))}
+            onClick={() => {
+              userActivatedRef.current = true;
+              stop();
+              setIndex((prev) => Math.max(0, prev - 1));
+            }}
           >
             上一句
           </button>
@@ -304,7 +327,11 @@ export default function ShadowingPage() {
           </span>
           <button
             className="btn"
-            onClick={() => setIndex((prev) => Math.min(playlist.length - 1, prev + 1))}
+            onClick={() => {
+              userActivatedRef.current = true;
+              stop();
+              setIndex((prev) => Math.min(playlist.length - 1, prev + 1));
+            }}
           >
             下一句
           </button>
