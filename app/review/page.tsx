@@ -12,8 +12,16 @@ import { dailyReviewLimit } from "@/lib/srs";
 import { phrases } from "@/data/phrases";
 
 export default function ReviewPage() {
-  const { srsMap, dueToday, setEase } = useSrs();
+  const { dueToday, setEase } = useSrs();
   const { opened } = useOpenedPhrases();
+  const shuffle = <T,>(list: T[]) => {
+    const next = [...list];
+    for (let i = next.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [next[i], next[j]] = [next[j], next[i]];
+    }
+    return next;
+  };
   const learnedPhrases = useMemo(() => {
     const phraseMap = new Map(phrases.map((phrase) => [phrase.id, phrase]));
     return opened
@@ -23,17 +31,8 @@ export default function ReviewPage() {
   const hasEnoughLearned = learnedPhrases.length >= dailyReviewLimit;
   const dueList = useMemo(
     () =>
-      learnedPhrases
-        .slice(-50)
-        .sort((a, b) => {
-          const aEntry = a ? srsMap[a.id] : undefined;
-          const bEntry = b ? srsMap[b.id] : undefined;
-          const easeDiff = (aEntry?.ease ?? 1) - (bEntry?.ease ?? 1);
-          if (easeDiff !== 0) return easeDiff;
-          return (aEntry?.lastReviewedAt ?? 0) - (bEntry?.lastReviewedAt ?? 0);
-        })
-        .slice(0, dailyReviewLimit),
-    [learnedPhrases, srsMap]
+      shuffle(learnedPhrases).slice(0, dailyReviewLimit),
+    [learnedPhrases]
   );
   const [index, setIndex] = useState(0);
   const completed = Math.min(index, dueList.length);

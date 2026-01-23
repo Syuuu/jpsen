@@ -25,10 +25,18 @@ type DialogueLine = {
 
 export default function ShadowingPage() {
   const { opened } = useOpenedPhrases();
+  const shuffle = <T,>(list: T[]) => {
+    const next = [...list];
+    for (let i = next.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [next[i], next[j]] = [next[j], next[i]];
+    }
+    return next;
+  };
   const playlist = useMemo(() => {
     const phraseMap = new Map(phrases.map((phrase) => [phrase.id, phrase]));
-    const recentIds = opened.slice(-20).reverse();
-    return recentIds
+    return shuffle(opened)
+      .slice(0, 20)
       .map((id) => phraseMap.get(id))
       .filter((phrase): phrase is (typeof phrases)[number] => Boolean(phrase));
   }, [opened]);

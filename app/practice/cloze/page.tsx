@@ -28,6 +28,15 @@ function sampleOptions(pool: string[], correct: string, count = 4) {
   return options;
 }
 
+function shuffle<T>(list: T[]) {
+  const next = [...list];
+  for (let i = next.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+}
+
 export default function ListeningPage() {
   const { voice } = useTtsVoice();
   const { opened } = useOpenedPhrases();
@@ -46,7 +55,8 @@ export default function ListeningPage() {
     const replyChoices = dialoguePool.map((phrase) => phrase.dialogue?.b ?? "");
 
     const hasDialogues = dialoguePool.length > 0;
-    meaningPool.slice(0, TOTAL_QUESTIONS).forEach((phrase, idx) => {
+    const randomized = shuffle(meaningPool);
+    randomized.slice(0, TOTAL_QUESTIONS).forEach((phrase, idx) => {
       const isReply = hasDialogues && idx % 2 === 1 && dialoguePool[idx % dialoguePool.length];
       if (isReply) {
         const dialogue = dialoguePool[idx % dialoguePool.length].dialogue!;
