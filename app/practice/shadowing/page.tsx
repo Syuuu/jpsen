@@ -169,7 +169,6 @@ export default function ShadowingPage() {
             preferFemale: isPreferFemaleVoice(voice)
           }
         ];
-    stop();
     setLoading(true);
     const playId = ++playIdRef.current;
     try {
@@ -192,6 +191,12 @@ export default function ShadowingPage() {
     }
   };
 
+  const startPlayback = () => {
+    if (!current) return;
+    stop();
+    void playSequence();
+  };
+
   const stop = () => {
     playIdRef.current += 1;
     audioRef.current?.pause();
@@ -205,10 +210,8 @@ export default function ShadowingPage() {
 
   useEffect(() => {
     if (!current) return;
-    if (current.dialogue) {
-      stop();
-    };
-  }, [index, current?.id]);
+    startPlayback();
+  }, [current?.id]);
 
   if (playlist.length === 0) {
     return (
@@ -260,7 +263,7 @@ export default function ShadowingPage() {
         <p className="text-sm text-slate-600">{current.cn}</p>
         <TagChips tags={current.tags} tone={current.tone} />
         <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-          <button className="btn btn-primary" onClick={playSequence}>
+          <button className="btn btn-primary" onClick={startPlayback}>
             {loading ? "播放中..." : playLabel}
           </button>
           <button className="btn flex items-center gap-2" onClick={stop}>
