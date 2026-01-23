@@ -6,7 +6,16 @@ import { HeaderNav } from "@/components/HeaderNav";
 export const metadata: Metadata = {
   title: "JP Phrases Trainer",
   description: "Daily Japanese phrase trainer with SRS and shadowing.",
-  manifest: "/manifest.webmanifest"
+  manifest: "/manifest.webmanifest",
+  themeColor: "#ffffff"
+};
+
+export const viewport = {
+  themeColor: "#ffffff"
+};
+
+export const viewport = {
+  themeColor: "#ffffff"
 };
 
 export const viewport = {
