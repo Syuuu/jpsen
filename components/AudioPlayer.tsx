@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { useTtsVoice } from "@/hooks/useTtsVoice";
 import { isPreferFemaleVoice, pickJapaneseVoice, waitForVoices } from "@/lib/tts";
 
-const rates = [0.75, 0.9, 1.0, 1.1, 1.25];
+const rates = [0.9, 1.0, 1.1, 1.25, 1.4];
 
 export function AudioPlayer({ text, voice }: { text: string; voice?: string }) {
-  const [rate, setRate] = useState(1.0);
+  const [rate, setRate] = useState(1.1);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
@@ -66,6 +66,7 @@ export function AudioPlayer({ text, voice }: { text: string; voice?: string }) {
   };
 
   const handlePlay = async () => {
+    handleStop();
     const url = await fetchTts();
     if (url) {
       const audio = new Audio(url);
@@ -94,7 +95,7 @@ export function AudioPlayer({ text, voice }: { text: string; voice?: string }) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <div className="flex flex-wrap items-center gap-2">
         <button className="btn btn-primary" onClick={handlePlay}>
           {loading ? "加载中..." : "播放"}
