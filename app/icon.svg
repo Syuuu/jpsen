@@ -1,4 +1,11 @@
-<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="14" fill="#0F172A"/>
-  <circle cx="32" cy="32" r="14" fill="#38BDF8"/>
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="14" fill="#FFF7ED"/>
+  <rect x="10" y="16" width="34" height="24" rx="10" fill="#38BDF8"/>
+  <path d="M20 40L14 46V40H20Z" fill="#38BDF8"/>
+  <rect x="28" y="28" width="26" height="18" rx="9" fill="#FB7185"/>
+  <path d="M42 46L48 50V46H42Z" fill="#FB7185"/>
+  <circle cx="22" cy="28" r="2" fill="#0F172A"/>
+  <circle cx="32" cy="28" r="2" fill="#0F172A"/>
+  <circle cx="36" cy="36" r="1.6" fill="#0F172A"/>
+  <circle cx="44" cy="36" r="1.6" fill="#0F172A"/>
 </svg>
