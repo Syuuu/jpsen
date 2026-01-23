@@ -24,7 +24,7 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body>
+      <body className="flex min-h-screen flex-col">
         <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
           <div className="container flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
@@ -34,7 +34,10 @@ export default function RootLayout({
             <HeaderNav />
           </div>
         </header>
-        <main className="container py-8">{children}</main>
+        <main className="container flex-1 py-8">{children}</main>
+        <footer className="container pb-6 text-center text-xs text-slate-400">
+          版本 1.0.2
+        </footer>
       </body>
     </html>
   );
