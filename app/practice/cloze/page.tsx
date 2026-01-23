@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { phrases } from "@/data/phrases";
 import { useTtsVoice } from "@/hooks/useTtsVoice";
+import { useOpenedPhrases } from "@/hooks/useOpenedPhrases";
 import { isPreferFemaleVoice, pickJapaneseVoice, waitForVoices } from "@/lib/tts";
 
 const TOTAL_QUESTIONS = 12;
+const baseRate = 1.1;
 
 type ListeningType = "meaning" | "reply";
 
@@ -27,8 +30,16 @@ function sampleOptions(pool: string[], correct: string, count = 4) {
 
 export default function ListeningPage() {
   const { voice } = useTtsVoice();
-  const dialoguePool = useMemo(() => phrases.filter((phrase) => phrase.dialogue), []);
-  const meaningPool = useMemo(() => phrases, []);
+  const { opened } = useOpenedPhrases();
+  const learnedPool = useMemo(
+    () => phrases.filter((phrase) => opened.includes(phrase.id)),
+    [opened]
+  );
+  const dialoguePool = useMemo(
+    () => learnedPool.filter((phrase) => phrase.dialogue),
+    [learnedPool]
+  );
+  const meaningPool = useMemo(() => learnedPool, [learnedPool]);
   const items = useMemo<ListeningItem[]>(() => {
     const questions: ListeningItem[] = [];
     const meaningChoices = meaningPool.map((phrase) => phrase.cn);
@@ -67,7 +78,8 @@ export default function ListeningPage() {
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [wrongIds, setWrongIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | "reveal" | null>(null);
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
@@ -93,6 +105,7 @@ export default function ListeningPage() {
     await new Promise<void>((resolve) => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "ja-JP";
+      utterance.rate = baseRate;
       const preferred = isPreferFemaleVoice(voice);
       const selectedVoice = pickJapaneseVoice(voices, preferred);
       if (selectedVoice) utterance.voice = selectedVoice;
@@ -112,6 +125,7 @@ export default function ListeningPage() {
       setSource("server");
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
+      audio.playbackRate = baseRate;
       audioRef.current = audio;
       audio.onended = () => {
         URL.revokeObjectURL(url);
@@ -145,6 +159,12 @@ export default function ListeningPage() {
     };
   }, [index, current?.id]);
 
+  useEffect(() => {
+    setIndex(0);
+    setWrongCount(0);
+    setWrongIds([]);
+  }, [items.length]);
+
   const goNext = () => {
     setSelected(null);
     setAttempts(0);
@@ -157,7 +177,6 @@ export default function ListeningPage() {
     setSelected(choice);
     if (choice === current.answer) {
       setFeedback("correct");
-      setCorrectCount((prev) => prev + 1);
       setTimeout(() => goNext(), 700);
       return;
     }
@@ -165,19 +184,45 @@ export default function ListeningPage() {
     if (attempts === 0) {
       setAttempts(1);
       setFeedback("wrong");
+      if (!wrongIds.includes(current.id)) {
+        setWrongIds((prev) => [...prev, current.id]);
+        setWrongCount((prev) => prev + 1);
+      }
     } else {
       setFeedback("reveal");
       setTimeout(() => goNext(), 900);
     }
   };
 
-  if (!current) {
+  if (learnedPool.length === 0) {
     return (
       <div className="card text-center">
-        <h1 className="text-2xl font-semibold">听力测试完成</h1>
-        <p className="text-slate-600">
-          正确 {correctCount} / {items.length}
-        </p>
+        <h1 className="text-2xl font-semibold">听力测试</h1>
+        <p className="text-slate-600">请先学习一些句子，再来进行测试。</p>
+        <Link href="/library" className="btn btn-primary">
+          去会话库学习
+        </Link>
+      </div>
+    );
+  }
+
+  if (!current) {
+    const total = items.length;
+    const accuracy = total === 0 ? 0 : Math.round(((total - wrongCount) / total) * 100);
+    const encouragement =
+      accuracy >= 90
+        ? "太棒了！发音和理解都很扎实。"
+        : accuracy >= 70
+        ? "做得不错！保持节奏继续进步。"
+        : "继续加油，多练几轮就会更顺畅。";
+    return (
+      <div className="card text-center">
+        <h1 className="text-2xl font-semibold">听力测试结算</h1>
+        <p className="text-slate-600">正确率 {accuracy}%</p>
+        <p className="text-slate-500">{encouragement}</p>
+        <Link href="/" className="btn btn-primary">
+          返回主页
+        </Link>
       </div>
     );
   }
@@ -196,9 +241,10 @@ export default function ListeningPage() {
 
       <div className="card space-y-4">
         <p className="text-sm text-slate-600">{current.prompt}</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <button className="btn btn-primary" onClick={playAudio}>
-            {loading ? "播放中..." : "重播"}
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <button className="btn btn-primary flex items-center gap-2" onClick={playAudio}>
+            <span aria-hidden>🔊</span>
+            <span>{loading ? "播放中..." : "播放"}</span>
           </button>
           <span className="text-xs text-slate-500">
             播放来源：

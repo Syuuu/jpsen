@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 const links = [
   { href: "/library", label: "会话库" },
+  { href: "/guide", label: "使用方式" },
   { href: "/review", label: "今日复习" },
   { href: "/practice/shadowing", label: "跟读" },
   { href: "/practice/cloze", label: "听力" },
