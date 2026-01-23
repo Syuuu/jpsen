@@ -49,9 +49,7 @@ export default function ShadowingPage() {
   const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playIdRef = useRef(0);
-  const pendingAutoplayRef = useRef(false);
   const userActivatedRef = useRef(false);
-  const startPlaybackRef = useRef<() => void>(() => {});
   const forceWebSpeechRef = useRef(false);
 
   const current = playlist[index];
@@ -152,7 +150,6 @@ export default function ShadowingPage() {
           if (error instanceof Error && error.name === "NotAllowedError") {
             if (!userActivatedRef.current) {
               setAutoplayBlocked(true);
-              pendingAutoplayRef.current = true;
             }
             finalize(false, true);
             return;
@@ -205,7 +202,6 @@ export default function ShadowingPage() {
   const startPlayback = () => {
     if (!current) return;
     userActivatedRef.current = true;
-    pendingAutoplayRef.current = false;
     stop();
     void playSequence();
   };
@@ -223,36 +219,10 @@ export default function ShadowingPage() {
 
   useEffect(() => {
     if (!current) return;
-    const hasActivation =
-      typeof navigator !== "undefined" &&
-      "userActivation" in navigator &&
-      Boolean(navigator.userActivation?.hasBeenActive);
-    if (hasActivation || userActivatedRef.current) {
+    if (userActivatedRef.current) {
       startPlayback();
-      return;
     }
-    pendingAutoplayRef.current = true;
   }, [current?.id]);
-
-  useEffect(() => {
-    startPlaybackRef.current = startPlayback;
-  }, [startPlayback]);
-
-  useEffect(() => {
-    const handleUserActivation = () => {
-      userActivatedRef.current = true;
-      if (pendingAutoplayRef.current) {
-        pendingAutoplayRef.current = false;
-        startPlaybackRef.current();
-      }
-    };
-    window.addEventListener("pointerdown", handleUserActivation, { once: true });
-    window.addEventListener("keydown", handleUserActivation, { once: true });
-    return () => {
-      window.removeEventListener("pointerdown", handleUserActivation);
-      window.removeEventListener("keydown", handleUserActivation);
-    };
-  }, []);
 
   if (playlist.length === 0) {
     return (
@@ -345,6 +315,7 @@ export default function ShadowingPage() {
           <button
             className="btn"
             onClick={() => {
+              userActivatedRef.current = true;
               stop();
               setIndex((prev) => Math.max(0, prev - 1));
             }}
@@ -357,6 +328,7 @@ export default function ShadowingPage() {
           <button
             className="btn"
             onClick={() => {
+              userActivatedRef.current = true;
               stop();
               setIndex((prev) => Math.min(playlist.length - 1, prev + 1));
             }}
