@@ -1,17 +1,38 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { AudioPlayer } from "@/components/AudioPlayer";
+import { DialogueAudioPlayer } from "@/components/DialogueAudioPlayer";
 import { ProgressMeter } from "@/components/ProgressMeter";
 import { SrsButtons } from "@/components/SrsButtons";
 import { useSrs } from "@/hooks/useSrs";
-import { dailyReviewLimit, getDuePhrases } from "@/lib/srs";
+import { useOpenedPhrases } from "@/hooks/useOpenedPhrases";
+import { dailyReviewLimit } from "@/lib/srs";
+import { phrases } from "@/data/phrases";
 
 export default function ReviewPage() {
-  const { srsMap, dueToday, setEase } = useSrs();
+  const { dueToday, setEase } = useSrs();
+  const { opened } = useOpenedPhrases();
+  const shuffle = <T,>(list: T[]) => {
+    const next = [...list];
+    for (let i = next.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [next[i], next[j]] = [next[j], next[i]];
+    }
+    return next;
+  };
+  const learnedPhrases = useMemo(() => {
+    const phraseMap = new Map(phrases.map((phrase) => [phrase.id, phrase]));
+    return opened
+      .map((id) => phraseMap.get(id))
+      .filter((phrase): phrase is (typeof phrases)[number] => Boolean(phrase));
+  }, [opened]);
+  const hasEnoughLearned = learnedPhrases.length >= dailyReviewLimit;
   const dueList = useMemo(
-    () => getDuePhrases(srsMap).slice(0, dailyReviewLimit),
-    [srsMap]
+    () =>
+      shuffle(learnedPhrases).slice(0, dailyReviewLimit),
+    [learnedPhrases]
   );
   const [index, setIndex] = useState(0);
   const completed = Math.min(index, dueList.length);
@@ -24,12 +45,28 @@ export default function ReviewPage() {
     setIndex((prev) => prev + 1);
   };
 
+  if (!hasEnoughLearned) {
+    return (
+      <div className="space-y-6">
+        <div className="card space-y-3 text-center">
+          <p className="text-lg font-semibold">请先学习</p>
+          <p className="text-slate-600">
+            学习句子不足 {dailyReviewLimit} 条，暂时无法进入复习。
+          </p>
+          <Link href="/library" className="btn btn-primary">
+            去会话库学习
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="card space-y-4">
-        <h1 className="text-2xl font-semibold">今日复习</h1>
+        <h1 className="text-2xl font-semibold">🧩 今日复习</h1>
         <p className="text-slate-600">
-          今日到期：{dueToday.length} 句。按顺序复习并标记熟练度。
+          今日到期：{dueToday.length} 句。优先复习熟练度较低的内容。
         </p>
         <ProgressMeter value={completed} total={dueList.length} />
       </div>
@@ -46,7 +83,16 @@ export default function ReviewPage() {
             <p className="text-xl font-semibold">{current.jp}</p>
             <p className="text-slate-600">{current.cn}</p>
           </div>
-          <AudioPlayer text={current.jp} />
+          {current.dialogue ? (
+            <DialogueAudioPlayer
+              lines={[
+                { label: "A", text: current.dialogue.a },
+                { label: "B", text: current.dialogue.b }
+              ]}
+            />
+          ) : (
+            <AudioPlayer text={current.jp} />
+          )}
           <SrsButtons onSelect={handleSelect} />
         </div>
       )}
@@ -55,6 +101,9 @@ export default function ReviewPage() {
         <div className="card text-center">
           <p className="text-lg font-semibold">今日复习完成！</p>
           <p className="text-slate-600">完成 {completed} 句，保持节奏。</p>
+          <Link href="/practice/shadowing" className="btn btn-primary">
+            进入跟读
+          </Link>
         </div>
       )}
     </div>
