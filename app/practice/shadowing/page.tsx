@@ -121,17 +121,17 @@ export default function ShadowingPage() {
   };
 
   const playAudio = (blob: Blob, playId: number) => {
-    return new Promise<boolean>((resolve) => {
+    return new Promise<{ played: boolean; blocked: boolean }>((resolve) => {
       let settled = false;
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audio.playbackRate = rate;
       audioRef.current = audio;
-      const finalize = (played: boolean) => {
+      const finalize = (played: boolean, blocked = false) => {
         if (settled) return;
         settled = true;
         URL.revokeObjectURL(url);
-        resolve(played);
+        resolve({ played, blocked });
       };
       audio.onended = () => {
         finalize(true);
@@ -151,6 +151,8 @@ export default function ShadowingPage() {
           if (error instanceof Error && error.name === "NotAllowedError") {
             setAutoplayBlocked(true);
             pendingAutoplayRef.current = true;
+            finalize(false, true);
+            return;
           }
           finalize(false);
         });
@@ -171,8 +173,11 @@ export default function ShadowingPage() {
           const blob = await fetchTts(line.text, line.voice);
           if (blob) {
             setSource("server");
-            const played = await playAudio(blob, playId);
-            if (!played) return;
+            const { played, blocked } = await playAudio(blob, playId);
+            if (!played) {
+              if (blocked) return;
+              await playWebSpeech(line, playId);
+            }
           } else {
             await playWebSpeech(line, playId);
           }
