@@ -9,7 +9,7 @@ import {
   waitForVoices
 } from "@/lib/tts";
 
-const rates = [0.75, 0.9, 1.0, 1.1, 1.25];
+const rates = [0.9, 1.0, 1.1, 1.25, 1.4];
 
 type DialogueLine = {
   label: string;
@@ -18,7 +18,7 @@ type DialogueLine = {
 
 export function DialogueAudioPlayer({ lines }: { lines: DialogueLine[] }) {
   const { voice } = useTtsVoice();
-  const [rate, setRate] = useState(1.0);
+  const [rate, setRate] = useState(1.1);
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState<"server" | "browser" | "idle">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -97,6 +97,7 @@ export function DialogueAudioPlayer({ lines }: { lines: DialogueLine[] }) {
 
   const playSequence = async () => {
     if (resolvedLines.length === 0) return;
+    stop();
     setLoading(true);
     setSource("idle");
     const playId = ++playIdRef.current;
@@ -130,7 +131,7 @@ export function DialogueAudioPlayer({ lines }: { lines: DialogueLine[] }) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <div className="flex flex-wrap items-center gap-2">
         <button className="btn btn-primary" onClick={playSequence}>
           {loading ? "播放中..." : "播放会话"}
